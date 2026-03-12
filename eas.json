@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 18.1.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "${ASC_APP_ID}",
+        "ascApiKeyId": "${ASC_API_KEY_ID}",
+        "ascApiKeyIssuerId": "${ASC_API_KEY_ISSUER_ID}",
+        "ascApiKeyPath": "${ASC_API_KEY_PATH}"
+      },
+      "android": {
+        "serviceAccountKeyPath": "${GOOGLE_SERVICE_ACCOUNT_KEY_PATH}",
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
+  }
+}

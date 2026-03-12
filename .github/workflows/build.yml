@@ -1,0 +1,184 @@
+name: Build App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-ios:
+    name: Build iOS
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Create .env.local
+        run: echo "${{ secrets.ENV_LOCAL }}" > .env.local
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: command -v eas >/dev/null 2>&1 || npm install -g eas-cli
+
+      - name: Build iOS
+        run: mkdir -p ./build && eas build --platform ios --local --non-interactive --output ./build/TriggerGo.ipa 2>&1 | tee ./build/eas-build.log
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Extract version info
+        id: version
+        run: |
+          APP_VERSION=$(node -p "require('./app.json').expo.version")
+          BUILD_NUMBER=$(grep -o 'buildNumber from [0-9]* to [0-9]*' ./build/eas-build.log | head -1 | grep -o '[0-9]*$' || echo "unknown")
+          echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: TriggerGo-iOS-${{ steps.version.outputs.app_version }}-${{ steps.version.outputs.build_number }}
+          path: build/TriggerGo.ipa
+
+      - name: Write ASC API Key
+        run: printenv ASC_API_KEY_P8 > ./asc-api-key.p8
+        env:
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+
+      - name: Inject ASC values into eas.json
+        run: |
+          sed -i '' "s|\${ASC_APP_ID}|${{ secrets.ASC_APP_ID }}|" eas.json
+          sed -i '' "s|\${ASC_API_KEY_ID}|${{ secrets.ASC_API_KEY_ID }}|" eas.json
+          sed -i '' "s|\${ASC_API_KEY_ISSUER_ID}|${{ secrets.ASC_API_KEY_ISSUER_ID }}|" eas.json
+          sed -i '' "s|\${ASC_API_KEY_PATH}|./asc-api-key.p8|" eas.json
+
+      - name: Submit to App Store Connect
+        run: eas submit --platform ios --path ./build/TriggerGo.ipa --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Notify Telegram
+        if: always()
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          if [ "${{ job.status }}" = "success" ]; then
+            TEXT=$(cat <<EOF
+          ✅ *iOS Build Successful*
+
+          *App:* TriggerGo
+          *Version:* ${{ steps.version.outputs.app_version }}
+          *Build Number:* ${{ steps.version.outputs.build_number }}
+          *Commit:* \`${COMMIT_SHA}\` — ${COMMIT_MSG}
+          *Details:* [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+            )
+          else
+            TEXT=$(cat <<EOF
+          ❌ *iOS Build Failed*
+
+          *App:* TriggerGo
+          *Commit:* \`${COMMIT_SHA}\` — ${COMMIT_MSG}
+          *Details:* [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+            )
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d message_thread_id="${{ secrets.TELEGRAM_THREAD_ID }}" \
+            -d parse_mode="Markdown" \
+            -d text="$TEXT"
+
+  build-android:
+    name: Build Android
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Create .env.local
+        run: echo "${{ secrets.ENV_LOCAL }}" > .env.local
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: command -v eas >/dev/null 2>&1 || npm install -g eas-cli
+
+      - name: Build Android
+        run: mkdir -p ./build && eas build --platform android --local --non-interactive --output ./build/TriggerGo.aab 2>&1 | tee ./build/eas-build.log
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          ANDROID_HOME: /opt/homebrew/share/android-commandlinetools
+
+      - name: Extract version info
+        id: version
+        run: |
+          APP_VERSION=$(node -p "require('./app.json').expo.version")
+          VERSION_CODE=$(grep -o 'versionCode from [0-9]* to [0-9]*' ./build/eas-build.log | head -1 | grep -o '[0-9]*$' || echo "unknown")
+          echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
+          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: TriggerGo-Android-${{ steps.version.outputs.app_version }}-${{ steps.version.outputs.version_code }}
+          path: build/TriggerGo.aab
+
+      - name: Write Google Service Account Key
+        run: printenv GOOGLE_SERVICE_ACCOUNT_KEY > ./google-service-account.json
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Inject Google service account path into eas.json
+        run: sed -i '' 's|\${GOOGLE_SERVICE_ACCOUNT_KEY_PATH}|./google-service-account.json|' eas.json
+
+      - name: Submit to Google Play
+        run: eas submit --platform android --path ./build/TriggerGo.aab --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Notify Telegram
+        if: always()
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          if [ "${{ job.status }}" = "success" ]; then
+            TEXT=$(cat <<EOF
+          ✅ *Android Build Successful*
+
+          *App:* TriggerGo
+          *Version:* ${{ steps.version.outputs.app_version }}
+          *Build Number:* ${{ steps.version.outputs.version_code }}
+          *Commit:* \`${COMMIT_SHA}\` — ${COMMIT_MSG}
+          *Details:* [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+            )
+          else
+            TEXT=$(cat <<EOF
+          ❌ *Android Build Failed*
+
+          *App:* TriggerGo
+          *Commit:* \`${COMMIT_SHA}\` — ${COMMIT_MSG}
+          *Details:* [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+            )
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d message_thread_id="${{ secrets.TELEGRAM_THREAD_ID }}" \
+            -d parse_mode="Markdown" \
+            -d text="$TEXT"
