@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { FlatList, View } from 'react-native';
+import { ContentContainer } from '@/components/layout';
 import { Stack } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,16 +77,18 @@ export default function EnvVarsScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: EnvVar }) => (
-      <EnvVarRow
-        envVar={item}
-        onEdit={() => handleEditPress(item)}
-        onDelete={() => {
-          deleteTargetRef.current = item;
-          deleteSheetRef.current?.present({
-            description: `This will permanently remove '${item.name}' from the ${environment} environment.`,
-          });
-        }}
-      />
+      <ContentContainer variant="reading">
+        <EnvVarRow
+          envVar={item}
+          onEdit={() => handleEditPress(item)}
+          onDelete={() => {
+            deleteTargetRef.current = item;
+            deleteSheetRef.current?.present({
+              description: `This will permanently remove '${item.name}' from the ${environment} environment.`,
+            });
+          }}
+        />
+      </ContentContainer>
     ),
     [handleEditPress]
   );

@@ -52,11 +52,11 @@ export function FavoritesSection() {
 
   return (
     <View className="mb-4">
-      <View className="flex-row items-center gap-2 px-4 mb-2">
+      <View className="flex-row items-center gap-2 px-4 tablet:px-8 mb-2">
         <Star size={16} color="#f59e0b" fill="#f59e0b" />
-        <Text className="text-mobile-body font-semibold text-foreground">Favorites</Text>
+        <Text className="text-mobile-body tablet:text-tablet-body font-semibold text-foreground">Favorites</Text>
       </View>
-      <Card className="mx-4 py-0 overflow-hidden">
+      <Card className="mx-4 tablet:mx-8 py-0 overflow-hidden">
         {favorites.map((item) => (
           <FavoriteRow
             key={item.id}

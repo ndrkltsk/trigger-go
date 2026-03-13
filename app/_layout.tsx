@@ -2,6 +2,7 @@ import '@/global.css';
 import { useEffect, useRef } from 'react';
 import { PortalHost } from '@rn-primitives/portal';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { QueryProvider } from '@/providers/query-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,6 +12,7 @@ import { AppLockScreen } from '@/components/shared/app-lock-screen';
 import { useAppLock } from '@/hooks/use-app-lock';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { startNetworkListener, stopNetworkListener } from '@/services/network/connectivity';
 import { initSentry, Sentry } from '@/services/sentry';
 import { PostHogProvider } from 'posthog-react-native';
@@ -26,12 +28,22 @@ function RootLayout() {
   const segments = useSegments();
   const { isAuthenticated, isLoading } = useAuthStore();
   const wasAuthenticated = useRef(isAuthenticated);
+  const { isTablet } = useDeviceLayout();
 
   useEffect(() => {
     usePreferencesStore.getState().loadPreferences();
     startNetworkListener();
     return () => stopNetworkListener();
   }, []);
+
+  // Lock phones to portrait, allow tablets to rotate freely
+  useEffect(() => {
+    if (isTablet) {
+      ScreenOrientation.unlockAsync();
+    } else {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
+  }, [isTablet]);
 
   // Redirect to login when auth state is lost (e.g. after logout or token invalidation)
   useEffect(() => {

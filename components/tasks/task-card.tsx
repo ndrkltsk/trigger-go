@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
@@ -14,21 +14,26 @@ export const TaskCard = React.memo(function TaskCard({
   task: TaskListItem;
   onPress?: (task: TaskListItem) => void;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const handleHoverIn = useCallback(() => setIsHovered(true), []);
+  const handleHoverOut = useCallback(() => setIsHovered(false), []);
   const hasSchema = !!task.payloadSchema;
 
   return (
     <Pressable
       onPress={() => onPress?.(task)}
+      onHoverIn={handleHoverIn}
+      onHoverOut={handleHoverOut}
       className="active:opacity-80"
       accessibilityRole="button"
       accessibilityLabel={`Task ${task.slug}${task.triggerSource ? `, source ${task.triggerSource}` : ''}`}
       accessibilityHint="Double tap to view task details"
     >
-      <View className="bg-card border-border mx-4 mb-1.5 rounded-md border py-3 px-4">
+      <View className="bg-card border-border mx-4 mb-1.5 rounded-md border py-3 px-4" style={[{ borderCurve: 'continuous' }, isHovered && { opacity: 0.85 }]}>
         {/* Top row: task slug */}
         <View className="flex-row items-center gap-2 mb-1">
           <Icon as={FileCode} size={16} className="text-primary" />
-          <Text className="text-mobile-body font-bold text-foreground flex-1" numberOfLines={1}>
+          <Text className="text-mobile-body tablet:text-tablet-body font-bold text-foreground flex-1" numberOfLines={1}>
             {task.slug}
           </Text>
           {hasSchema && (

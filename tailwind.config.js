@@ -6,6 +6,11 @@ module.exports = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './lib/**/*.{ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {
+    screens: {
+      'tablet': '768px',
+      'tablet-lg': '1024px',
+      'desktop': '1280px',
+    },
     extend: {
       colors: {
         border: 'hsl(var(--border))',
@@ -62,6 +67,10 @@ module.exports = {
         'mobile-secondary': ['14px', '22px'],
         'mobile-caption': ['13px', '18px'],
         'mobile-tab': ['11px', '14px'],
+        'tablet-title': ['26px', '32px'],
+        'tablet-body': ['17px', '24px'],
+        'tablet-secondary': ['16px', '24px'],
+        'tablet-caption': ['14px', '20px'],
       },
       borderRadius: {
         sheet: '16px',

@@ -7,6 +7,8 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { ConfirmSheet, type ConfirmSheetRef } from '@/components/shared/confirm-sheet';
 import { FavoritesSection } from '@/components/dashboard/favorites-section';
+import { ContentContainer } from '@/components/layout';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { CalendarClock, DollarSign, FolderKanban, Bell, KeyRound, LogOut, ChevronRight, Shield, Users, Rocket } from 'lucide-react-native';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { signOut } from '@/services/auth/sign-out';
@@ -23,14 +25,17 @@ function MenuRow({
   onPress: () => void;
   disabled?: boolean;
 }) {
+  const [isHovered, setIsHovered] = React.useState(false);
   return (
     <Pressable
       onPress={onPress}
+      onHoverIn={() => setIsHovered(true)}
+      onHoverOut={() => setIsHovered(false)}
       className="flex-row items-center px-4 py-3.5 active:opacity-70"
       accessibilityRole="button"
       accessibilityLabel={label}
       disabled={disabled}
-      style={disabled ? { opacity: 0.5 } : undefined}
+      style={[disabled ? { opacity: 0.5 } : undefined, isHovered && { opacity: 0.7 }]}
     >
       <View className="mr-3" importantForAccessibility="no">{icon}</View>
       <Text className="flex-1 text-mobile-secondary text-foreground">{label}</Text>
@@ -80,6 +85,8 @@ export default function SettingsScreen() {
     }
   }, [biometricTypeLabel, setBiometricLockEnabled]);
 
+  const { isTablet } = useDeviceLayout();
+
   const handleSignOut = useCallback(async () => {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     signOutSheetRef.current?.dismiss();
@@ -87,60 +94,47 @@ export default function SettingsScreen() {
     // Navigation is handled by the auth guard in _layout.tsx
   }, [queryClient]);
 
+  const menuItems = [
+    { icon: <CalendarClock size={20} color="#F59E0B" />, label: 'Schedules', onPress: () => router.push('/(dashboard)/(settings)/schedules') },
+    { icon: <Users size={20} color="#6B7280" />, label: 'Profiles', onPress: () => router.push('/(dashboard)/(settings)/profiles') },
+    { icon: <FolderKanban size={20} color="#3B82F6" />, label: 'Projects', onPress: () => router.push('/(dashboard)/(settings)/projects') },
+    { icon: <DollarSign size={20} color="#22C55E" />, label: 'Costs', onPress: () => router.push('/(dashboard)/(settings)/cost-dashboard') },
+    { icon: <KeyRound size={20} color="#A78BFA" />, label: 'Environment Variables', onPress: () => router.push('/(dashboard)/(settings)/env-vars') },
+    { icon: <Bell size={20} color="#F59E0B" />, label: 'Notifications', onPress: () => router.push('/(dashboard)/(settings)/notifications'), disabled: true as const },
+    { icon: <Rocket size={20} color="#3B82F6" />, label: 'Deployments', onPress: () => router.push('/(dashboard)/(settings)/deployments') },
+  ];
+
   return (
     <ScrollView className="flex-1 bg-background" contentInsetAdjustmentBehavior="automatic">
-      <View className="mt-4">
+      <ContentContainer variant="reading">
+      <View className="mt-4 tablet:mt-6">
         <FavoritesSection />
       </View>
-      <View className="bg-card border-border mx-4 mt-4 rounded-md border overflow-hidden">
-        <MenuRow
-          icon={<CalendarClock size={20} color="#F59E0B" />}
-          label="Schedules"
-          onPress={() => router.push('/(dashboard)/(settings)/schedules')}
-        />
-        <View className="border-border border-t" />
-        <MenuRow
-          icon={<Users size={20} color="#6B7280" />}
-          label="Profiles"
-          onPress={() => router.push('/(dashboard)/(settings)/profiles')}
-        />
-        <View className="border-border border-t" />
-        <MenuRow
-          icon={<FolderKanban size={20} color="#3B82F6" />}
-          label="Projects"
-          onPress={() => router.push('/(dashboard)/(settings)/projects')}
-        />
-        <View className="border-border border-t" />
-        <MenuRow
-          icon={<DollarSign size={20} color="#22C55E" />}
-          label="Costs"
-          onPress={() => router.push('/(dashboard)/(settings)/cost-dashboard')}
-        />
-        <View className="border-border border-t" />
-        <MenuRow
-          icon={<KeyRound size={20} color="#A78BFA" />}
-          label="Environment Variables"
-          onPress={() => router.push('/(dashboard)/(settings)/env-vars')}
-        />
-        <View className="border-border border-t" />
-        <MenuRow
-          icon={<Bell size={20} color="#F59E0B" />}
-          label="Notifications"
-          onPress={() => router.push('/(dashboard)/(settings)/notifications')}
-          disabled
-        />
-        <View className="border-border border-t" />
-        <MenuRow
-          icon={<Rocket size={20} color="#3B82F6" />}
-          label="Deployments"
-          onPress={() => router.push('/(dashboard)/(settings)/deployments')}
-        />
-      </View>
+      {isTablet ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginHorizontal: 32, marginTop: 24 }}>
+          {menuItems.map((item) => (
+            <View key={item.label} style={{ width: '48%' }}>
+              <View className="bg-card border-border rounded-md border overflow-hidden">
+                <MenuRow {...item} />
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View className="bg-card border-border mx-4 mt-4 rounded-md border overflow-hidden">
+          {menuItems.map((item, index) => (
+            <React.Fragment key={item.label}>
+              {index > 0 && <View className="border-border border-t" />}
+              <MenuRow {...item} />
+            </React.Fragment>
+          ))}
+        </View>
+      )}
 
-      <Text className="text-mobile-tab font-semibold text-muted-foreground px-4 mt-6 mb-2 uppercase tracking-wide" accessibilityRole="header">
+      <Text className="text-mobile-tab font-semibold text-muted-foreground px-4 tablet:px-8 mt-6 tablet:mt-8 mb-2 uppercase tracking-wide" accessibilityRole="header">
         Security
       </Text>
-      <View className="bg-card border-border mx-4 rounded-md border overflow-hidden">
+      <View className="bg-card border-border mx-4 tablet:mx-8 rounded-md border overflow-hidden">
         <View className="flex-row items-center px-4 py-3">
           <Shield size={20} color="#a1a1aa" importantForAccessibility="no" />
           <Text className="flex-1 text-mobile-secondary text-foreground ml-3">
@@ -177,7 +171,7 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      <View className="mx-4 mt-8 mb-8">
+      <View className="mx-4 tablet:mx-8 mt-8 mb-8">
         <Button
           variant="outline"
           onPress={() => signOutSheetRef.current?.present()}
@@ -187,6 +181,8 @@ export default function SettingsScreen() {
           <Text className="text-sm font-medium text-destructive">Sign Out</Text>
         </Button>
       </View>
+
+      </ContentContainer>
 
       <ConfirmSheet
         ref={signOutSheetRef}

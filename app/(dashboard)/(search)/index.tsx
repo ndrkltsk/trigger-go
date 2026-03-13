@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { SearchResultItem } from '@/components/shared/search-result-item';
 import { RunStatusBadge } from '@/components/runs/run-status-badge';
+import { ContentContainer } from '@/components/layout';
 import { useGlobalSearch } from '@/hooks/use-global-search';
 import { useSearchStore } from '@/stores/search-store';
 import { formatRelativeTime } from '@/lib/format';
@@ -40,6 +41,7 @@ export default function SearchScreen() {
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
     >
+      <ContentContainer variant="reading">
       {showRecent && (
         <View className="mt-2">
           <View className="flex-row items-center justify-between px-4 py-2">
@@ -135,6 +137,7 @@ export default function SearchScreen() {
           )}
         </>
       )}
+      </ContentContainer>
     </ScrollView>
   );
 }

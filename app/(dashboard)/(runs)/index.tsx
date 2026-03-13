@@ -8,6 +8,7 @@ import { AnimatedRunCard } from '@/components/runs/animated-run-card';
 import { RunCardSkeletonList } from '@/components/runs/run-card-skeleton';
 import { RunFilters } from '@/components/runs/run-filters';
 import { EmptyState } from '@/components/shared/empty-state';
+import { ContentContainer } from '@/components/layout';
 import { useRuns } from '@/hooks/api/use-runs';
 import { useTasksList } from '@/hooks/api/use-tasks';
 import { useFiltersStore, hasActiveFilters } from '@/stores/filters-store';
@@ -106,11 +107,13 @@ export default function RunsListScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: ListRunItem }) => (
-      <AnimatedRunCard
-        run={item}
-        onPress={() => handleRunPress(item)}
-        isNew={newRunIds.has(item.id)}
-      />
+      <ContentContainer>
+        <AnimatedRunCard
+          run={item}
+          onPress={() => handleRunPress(item)}
+          isNew={newRunIds.has(item.id)}
+        />
+      </ContentContainer>
     ),
     [handleRunPress, newRunIds]
   );
@@ -125,8 +128,10 @@ export default function RunsListScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 bg-background" accessibilityLabel="Loading runs" accessibilityRole="progressbar">
-        <RunFilters availableTasks={[]} availableTags={[]} />
-        <RunCardSkeletonList count={5} />
+        <ContentContainer>
+          <RunFilters availableTasks={[]} availableTags={[]} />
+          <RunCardSkeletonList count={5} />
+        </ContentContainer>
       </View>
     );
   }
@@ -134,7 +139,9 @@ export default function RunsListScreen() {
   if (isError) {
     return (
       <View className="flex-1 bg-background">
-        <RunFilters availableTasks={availableTasks} availableTags={availableTags} />
+        <ContentContainer>
+          <RunFilters availableTasks={availableTasks} availableTags={availableTags} />
+        </ContentContainer>
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-destructive text-center mb-4">
             {error?.message ?? 'Failed to load runs'}
@@ -149,54 +156,56 @@ export default function RunsListScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <RunFilters availableTasks={availableTasks} availableTags={availableTags} />
-      <FlashList
-        ref={listRef}
-        data={runs}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        contentContainerStyle={{ paddingTop: 8 }}
-        contentInsetAdjustmentBehavior="automatic"
-        onRefresh={async () => {
-          setIsManualRefreshing(true);
-          try {
-            await refetch();
-          } finally {
-            setIsManualRefreshing(false);
+      <ContentContainer>
+        <RunFilters availableTasks={availableTasks} availableTags={availableTags} />
+      </ContentContainer>
+        <FlashList
+          ref={listRef}
+          data={runs}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ paddingTop: 8 }}
+          contentInsetAdjustmentBehavior="automatic"
+          onRefresh={async () => {
+            setIsManualRefreshing(true);
+            try {
+              await refetch();
+            } finally {
+              setIsManualRefreshing(false);
+            }
+          }}
+          refreshing={isManualRefreshing}
+          extraData={{ newRunIds }}
+          accessibilityLabel={`Runs list, ${runs.length} items`}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View className="py-4 items-center">
+                <ActivityIndicator />
+              </View>
+            ) : null
           }
-        }}
-        refreshing={isManualRefreshing}
-        extraData={{ newRunIds }}
-        accessibilityLabel={`Runs list, ${runs.length} items`}
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <View className="py-4 items-center">
-              <ActivityIndicator />
-            </View>
-          ) : null
-        }
-        ListEmptyComponent={
-          filtersActive ? (
-            <EmptyState
-              icon={SearchX}
-              title="No matching runs"
-              description="Try adjusting your filters to find what you are looking for."
-              actionLabel="Clear filters"
-              onAction={() => useFiltersStore.getState().clearAllFilters()}
-            />
-          ) : (
-            <EmptyState
-              icon={Inbox}
-              title="No runs yet"
-              description="Trigger a task to see your runs appear here."
-            />
-          )
-        }
-      />
+          ListEmptyComponent={
+            filtersActive ? (
+              <EmptyState
+                icon={SearchX}
+                title="No matching runs"
+                description="Try adjusting your filters to find what you are looking for."
+                actionLabel="Clear filters"
+                onAction={() => useFiltersStore.getState().clearAllFilters()}
+              />
+            ) : (
+              <EmptyState
+                icon={Inbox}
+                title="No runs yet"
+                description="Trigger a task to see your runs appear here."
+              />
+            )
+          }
+        />
 
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button icon="plus" onPress={() => triggerSheetRef.current?.present()} />

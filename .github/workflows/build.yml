@@ -47,6 +47,14 @@ jobs:
           name: TriggerGo-iOS-${{ steps.version.outputs.app_version }}-${{ steps.version.outputs.build_number }}
           path: build/TriggerGo.ipa
 
+      - name: Upload iOS build to Sentry Size Analysis
+        run: |
+          set -a && source .env.local && set +a
+          npx sentry-cli build upload ./build/TriggerGo.ipa \
+            --org "$SENTRY_ORG" \
+            --project "$SENTRY_PROJECT" \
+            --build-configuration Release
+
       - name: Write ASC API Key
         run: printenv ASC_API_KEY_P8 > ./asc-api-key.p8
         env:
@@ -137,6 +145,14 @@ jobs:
         with:
           name: TriggerGo-Android-${{ steps.version.outputs.app_version }}-${{ steps.version.outputs.version_code }}
           path: build/TriggerGo.aab
+
+      - name: Upload Android build to Sentry Size Analysis
+        run: |
+          set -a && source .env.local && set +a
+          npx sentry-cli build upload ./build/TriggerGo.aab \
+            --org "$SENTRY_ORG" \
+            --project "$SENTRY_PROJECT" \
+            --build-configuration Release
 
       - name: Write Google Service Account Key
         run: printenv GOOGLE_SERVICE_ACCOUNT_KEY > ./google-service-account.json

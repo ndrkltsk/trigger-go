@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { MissingSecretKey } from '@/components/shared/missing-secret-key';
+import { ContentContainer } from '@/components/layout';
 import { ScheduleCard } from '@/components/schedules/schedule-card';
 import { ScheduleFormSheet, type ScheduleFormSheetRef, type ScheduleFormValues } from '@/components/schedules/schedule-form-sheet';
 import { useSchedules, useCreateSchedule, useTimezones } from '@/hooks/api/use-schedules';
@@ -122,9 +123,11 @@ export default function SchedulesListScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: ScheduleObject }) => (
-      <View className="px-4 pb-3">
-        <ScheduleCard schedule={item} onPress={handleSchedulePress} />
-      </View>
+      <ContentContainer variant="reading">
+        <View className="px-4 tablet:px-8 pb-3">
+          <ScheduleCard schedule={item} onPress={handleSchedulePress} />
+        </View>
+      </ContentContainer>
     ),
     [handleSchedulePress]
   );

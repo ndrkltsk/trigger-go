@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { View, FlatList } from 'react-native';
+import { ContentContainer } from '@/components/layout';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { ConfirmSheet, type ConfirmSheetRef } from '@/components/shared/confirm-sheet';
@@ -146,13 +147,15 @@ export function ProfileManager({ onProfileSwitch }: ProfileManagerProps) {
 
   return (
     <View className="flex-1">
-      <View className="flex-row items-center justify-between px-4 py-3">
-        <Text className="text-base font-semibold text-foreground">Saved Profiles</Text>
-        <Button variant="outline" size="sm" onPress={() => createSheetRef.current?.present()}>
-          <Plus size={16} color="#8B95A5" />
-          <Text className="text-mobile-caption font-medium text-foreground">Add</Text>
-        </Button>
-      </View>
+      <ContentContainer variant="reading">
+        <View className="flex-row items-center justify-between px-4 tablet:px-8 py-3">
+          <Text className="text-base font-semibold text-foreground">Saved Profiles</Text>
+          <Button variant="outline" size="sm" onPress={() => createSheetRef.current?.present()}>
+            <Plus size={16} color="#8B95A5" />
+            <Text className="text-mobile-caption font-medium text-foreground">Add</Text>
+          </Button>
+        </View>
+      </ContentContainer>
 
       {profiles.length === 0 ? (
         <View className="items-center py-12 px-8">
@@ -168,15 +171,17 @@ export function ProfileManager({ onProfileSwitch }: ProfileManagerProps) {
           renderItem={({ item }) => {
             loadMaskedKey(item.id);
             return (
-              <ProfileCard
-                name={item.name}
-                email={item.email}
-                maskedKey={maskedKeys[item.id] ?? '****'}
-                isActive={item.id === activeProfileId}
-                onPress={() => handleProfilePress(item.id)}
-                onDelete={() => openDelete(item.id, item.name)}
-                onRename={() => openRename(item.id, item.name)}
-              />
+              <ContentContainer variant="reading">
+                <ProfileCard
+                  name={item.name}
+                  email={item.email}
+                  maskedKey={maskedKeys[item.id] ?? '****'}
+                  isActive={item.id === activeProfileId}
+                  onPress={() => handleProfilePress(item.id)}
+                  onDelete={() => openDelete(item.id, item.name)}
+                  onRename={() => openRename(item.id, item.name)}
+                />
+              </ContentContainer>
             );
           }}
         />

@@ -1,1 +1,1 @@
-// Layout components
+export { ContentContainer } from './content-container';

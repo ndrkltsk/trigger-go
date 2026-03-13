@@ -3,6 +3,7 @@ import { View, ScrollView, TextInput, Pressable } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Switch } from '@/components/ui/switch';
+import { ContentContainer } from '@/components/layout';
 import { ChevronRight } from 'lucide-react-native';
 import { usePreferencesStore, type NotifyEnvironments } from '@/stores/preferences-store';
 import { useEnvironmentsStore } from '@/stores/environments-store';
@@ -68,7 +69,8 @@ export default function NotificationSettingsScreen() {
     <>
       <Stack.Screen options={{ title: 'Notifications' }} />
       <ScrollView className="flex-1 bg-background">
-        <View className="bg-card border-border mx-4 mt-4 rounded-lg border overflow-hidden">
+        <ContentContainer variant="reading">
+        <View className="bg-card border-border mx-4 tablet:mx-8 mt-4 tablet:mt-6 rounded-lg border overflow-hidden">
           <SwitchRow
             label="Enable Notifications"
             checked={notificationsEnabled}
@@ -77,7 +79,7 @@ export default function NotificationSettingsScreen() {
         </View>
 
         <SectionHeader title="Event Types" />
-        <View className="bg-card border-border mx-4 rounded-lg border overflow-hidden">
+        <View className="bg-card border-border mx-4 tablet:mx-8 rounded-lg border overflow-hidden">
           <SwitchRow
             label="Failures"
             checked={notifyOnFailures}
@@ -98,7 +100,7 @@ export default function NotificationSettingsScreen() {
         </View>
 
         <SectionHeader title="Environments" />
-        <View className="bg-card border-border mx-4 rounded-lg border overflow-hidden">
+        <View className="bg-card border-border mx-4 tablet:mx-8 rounded-lg border overflow-hidden">
           {availableEnvironments.map((env, index) => (
             <React.Fragment key={env}>
               {index > 0 && <View className="border-border border-t" />}
@@ -112,7 +114,7 @@ export default function NotificationSettingsScreen() {
         </View>
 
         <SectionHeader title="Custom Rules" />
-        <View className="bg-card border-border mx-4 rounded-lg border overflow-hidden">
+        <View className="bg-card border-border mx-4 tablet:mx-8 rounded-lg border overflow-hidden">
           <Pressable
             onPress={() => router.push('/(dashboard)/(settings)/notification-rules')}
             className="flex-row items-center justify-between px-4 py-3 active:opacity-70"
@@ -132,7 +134,7 @@ export default function NotificationSettingsScreen() {
         </View>
 
         <SectionHeader title="Quiet Hours" />
-        <View className="bg-card border-border mx-4 rounded-lg border overflow-hidden mb-8">
+        <View className="bg-card border-border mx-4 tablet:mx-8 rounded-lg border overflow-hidden mb-8">
           <SwitchRow
             label="Enable Quiet Hours"
             checked={quietHoursEnabled}
@@ -165,6 +167,7 @@ export default function NotificationSettingsScreen() {
             </>
           )}
         </View>
+        </ContentContainer>
       </ScrollView>
     </>
   );
