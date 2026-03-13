@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useNetworkStore } from '@/stores/network-store';
 import { isTerminalStatus } from '@/lib/status-colors';
 import type { RetrieveRunResponse } from '@/services/api/runs';
+import { metrics } from '@/services/sentry';
 
 export function useRealtimeRun(runId: string, enabled: boolean) {
   const queryClient = useQueryClient();
@@ -49,6 +50,7 @@ export function useRealtimeRun(runId: string, enabled: boolean) {
         if (useNetworkStore.getState().isConnected && retryCountRef.current < 5) {
           const delay = Math.min(1000 * 2 ** retryCountRef.current, 30_000);
           retryCountRef.current += 1;
+          metrics.count('realtime.subscription.retry', 1, { attributes: { attempt: String(retryCountRef.current) } });
           retryTimerRef.current = setTimeout(connect, delay);
         }
       });

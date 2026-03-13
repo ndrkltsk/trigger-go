@@ -242,7 +242,7 @@ export default function LoginScreen() {
           <Button
             variant="link"
             onPress={() =>
-              Linking.openURL('https://trigger.dev/docs/management/overview')
+              Linking.openURL('https://trigger.dev/docs/management/authentication#personal-access-token-pat')
             }
           >
             <Text>Where do I find my Personal Access Token?</Text>

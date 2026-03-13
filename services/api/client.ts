@@ -5,7 +5,7 @@ import { useNetworkStore } from '@/stores/network-store';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { getSecretKeyForEnv } from '@/stores/secret-keys-store';
 import { MissingSecretKeyError } from '@/lib/errors';
-import { Sentry } from '@/services/sentry';
+import { Sentry, metrics } from '@/services/sentry';
 
 let clientInstance: ReturnType<typeof createClient<paths>> | null = null;
 
@@ -49,6 +49,9 @@ async function getJwtToken(projectRef: string, env: string): Promise<string> {
 
   const url = `${baseUrl}/api/v1/projects/${encodeURIComponent(projectRef)}/${encodeURIComponent(env)}/jwt`;
 
+  metrics.count('api.jwt_exchange', 1, { attributes: { env } });
+  const jwtStart = Date.now();
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -63,6 +66,8 @@ async function getJwtToken(projectRef: string, env: string): Promise<string> {
   });
 
   if (!response.ok) {
+    metrics.distribution('api.jwt_exchange.duration', Date.now() - jwtStart, { unit: 'millisecond' });
+    metrics.count('api.jwt_exchange.error', 1, { attributes: { status: String(response.status), env } });
     jwtCache.delete(cacheKey);
     const body = await response.text().catch(() => '');
     let parsed: { error?: string } = {};
@@ -72,6 +77,8 @@ async function getJwtToken(projectRef: string, env: string): Promise<string> {
     Sentry.captureException(err, { extra: { status: response.status, projectRef, env } });
     throw err;
   }
+
+  metrics.distribution('api.jwt_exchange.duration', Date.now() - jwtStart, { unit: 'millisecond' });
 
   const data = (await response.json()) as { token: string };
 

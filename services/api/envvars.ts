@@ -1,6 +1,7 @@
 import { getApiClient } from './client';
 import { ApiError } from '@/lib/errors';
 import type { components } from './generated-types';
+import { metrics } from '@/services/sentry';
 
 export type EnvVar = components['schemas']['EnvVar'];
 export type EnvVarValue = components['schemas']['EnvVarValue'];
@@ -35,6 +36,7 @@ export async function createEnvVar(
   env: EnvType,
   envVar: { name: string; value: string }
 ): Promise<{ success: boolean }> {
+  metrics.count('api.envvars.create', 1, { attributes: { env } });
   const client = getApiClient();
   const { data, error, response } = await client.POST(
     '/api/v1/projects/{projectRef}/envvars/{env}',
@@ -79,6 +81,7 @@ export async function updateEnvVar(
   name: string,
   value: string
 ): Promise<{ success: boolean }> {
+  metrics.count('api.envvars.update', 1, { attributes: { env } });
   const client = getApiClient();
   const { data, error, response } = await client.PUT(
     '/api/v1/projects/{projectRef}/envvars/{env}/{name}',
@@ -101,6 +104,7 @@ export async function deleteEnvVar(
   env: EnvType,
   name: string
 ): Promise<{ success: boolean }> {
+  metrics.count('api.envvars.delete', 1, { attributes: { env } });
   const client = getApiClient();
   const { data, error, response } = await client.DELETE(
     '/api/v1/projects/{projectRef}/envvars/{env}/{name}',
@@ -123,6 +127,8 @@ export async function importEnvVars(
   variables: EnvVar[],
   override = false
 ): Promise<ImportEnvVarsResult> {
+  metrics.count('api.envvars.import', 1, { attributes: { env, override: String(override) } });
+  metrics.distribution('api.envvars.import.size', variables.length);
   const client = getApiClient();
   const { data, error, response } = await client.POST(
     '/api/v1/projects/{projectRef}/envvars/{env}/import',

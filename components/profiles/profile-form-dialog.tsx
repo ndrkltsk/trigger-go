@@ -1,5 +1,5 @@
 import { forwardRef, useState, useImperativeHandle, useRef } from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BottomSheet, type BottomSheetRef } from '@/components/ui/bottom-sheet/bottom-sheet';
 import { BottomSheetHeader } from '@/components/ui/bottom-sheet/bottom-sheet-header';
-import { isValidTokenFormat } from '@/lib/validation';
+import { isValidTokenFormat, verifyServerUrl, normalizeUrl } from '@/lib/validation';
 import { API_BASE_URL } from '@/lib/constants';
 
 interface ProfileFormDialogProps {
@@ -25,6 +25,7 @@ export const ProfileFormDialog = forwardRef<BottomSheetRef, ProfileFormDialogPro
     const [apiKey, setApiKey] = useState('');
     const [serverUrl, setServerUrl] = useState(API_BASE_URL);
     const [error, setError] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
 
     useImperativeHandle(ref, () => ({
       present: async () => {
@@ -32,12 +33,13 @@ export const ProfileFormDialog = forwardRef<BottomSheetRef, ProfileFormDialogPro
         setApiKey('');
         setServerUrl(API_BASE_URL);
         setError('');
+        setIsVerifying(false);
         await sheetRef.current?.present();
       },
       dismiss: async () => { await sheetRef.current?.dismiss(); },
     }));
 
-    const handleSave = () => {
+    const handleSave = async () => {
       const trimmedName = name.trim();
       if (!trimmedName) {
         setError('Profile name is required');
@@ -53,7 +55,22 @@ export const ProfileFormDialog = forwardRef<BottomSheetRef, ProfileFormDialogPro
           setError('Invalid token format. Must start with tr_pat_');
           return;
         }
-        onSave({ name: trimmedName, apiKey: apiKey.trim(), serverUrl: serverUrl.trim() || API_BASE_URL });
+
+        const trimmedUrl = normalizeUrl(serverUrl.trim() || API_BASE_URL);
+
+        // Verify custom server URL before saving
+        if (trimmedUrl !== API_BASE_URL) {
+          setIsVerifying(true);
+          setError('');
+          const verification = await verifyServerUrl(trimmedUrl);
+          setIsVerifying(false);
+          if (!verification.ok) {
+            setError(verification.error!);
+            return;
+          }
+        }
+
+        onSave({ name: trimmedName, apiKey: apiKey.trim(), serverUrl: trimmedUrl });
       } else {
         onSave({ name: trimmedName });
       }
@@ -69,10 +86,17 @@ export const ProfileFormDialog = forwardRef<BottomSheetRef, ProfileFormDialogPro
             <Button variant="glass" onPress={() => sheetRef.current?.dismiss()} className="flex-1">
               <Text className="text-sm font-medium">Cancel</Text>
             </Button>
-            <Button glassTintColor='rgb(38, 217, 104)' variant="glass" onPress={handleSave} className="flex-1">
-              <Text className="text-sm font-medium text-primary-foreground">
-                {mode === 'create' ? 'Save Profile' : 'Rename'}
-              </Text>
+            <Button glassTintColor='rgb(38, 217, 104)' variant="glass" onPress={handleSave} disabled={isVerifying} className="flex-1">
+              {isVerifying ? (
+                <View className="flex-row items-center gap-2">
+                  <ActivityIndicator size="small" color="white" />
+                  <Text className="text-sm font-medium text-primary-foreground">Verifying...</Text>
+                </View>
+              ) : (
+                <Text className="text-sm font-medium text-primary-foreground">
+                  {mode === 'create' ? 'Save Profile' : 'Rename'}
+                </Text>
+              )}
             </Button>
           </View>
         }

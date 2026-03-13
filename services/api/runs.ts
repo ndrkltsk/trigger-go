@@ -1,6 +1,6 @@
 import { getApiClient, getJwtApiClient, jwtFetch } from './client';
 import { ApiError } from '@/lib/errors';
-import { Sentry } from '@/services/sentry';
+import { Sentry, metrics } from '@/services/sentry';
 import { posthogCapture } from '@/services/posthog';
 import type { components } from './generated-types';
 
@@ -149,6 +149,7 @@ export async function rescheduleRun(
   runId: string,
   delay: string
 ): Promise<RetrieveRunResponse> {
+  metrics.count('api.runs.reschedule', 1);
   Sentry.logger.info(Sentry.logger.fmt`Rescheduling run ${runId} with delay ${delay}`);
   posthogCapture('run rescheduled', { run_id: runId, delay });
   const client = await getJwtApiClient();
@@ -169,6 +170,7 @@ export async function rescheduleRun(
 }
 
 export async function cancelRun(runId: string): Promise<{ id?: string }> {
+  metrics.count('api.runs.cancel', 1);
   Sentry.logger.info(Sentry.logger.fmt`Cancelling run ${runId}`);
   posthogCapture('run canceled', { run_id: runId });
   const client = await getJwtApiClient();
@@ -188,6 +190,7 @@ export async function replayRun(
   taskIdentifier: string,
   payload: unknown
 ): Promise<{ id?: string }> {
+  metrics.count('api.runs.replay', 1);
   Sentry.logger.info(Sentry.logger.fmt`Replaying task ${taskIdentifier}`);
   posthogCapture('run replayed', { task_identifier: taskIdentifier });
   const client = await getJwtApiClient();
@@ -211,6 +214,7 @@ export async function updateRunMetadata(
   runId: string,
   metadata: Record<string, unknown>
 ): Promise<{ metadata?: Record<string, unknown> }> {
+  metrics.count('api.runs.metadata_update', 1);
   posthogCapture('run metadata_updated', { run_id: runId });
   const client = await getJwtApiClient();
   const { data, error, response } = await client.PUT('/api/v1/runs/{runId}/metadata', {
@@ -241,6 +245,7 @@ export async function searchRuns(query: string, projectRef: string, env: string)
   const trimmed = query.trim();
   if (!trimmed) return { data: [] } as unknown as ListRunsResult;
 
+  metrics.count('api.runs.search', 1, { attributes: { env } });
   posthogCapture('runs searched', { environment: env });
 
   // Tag search

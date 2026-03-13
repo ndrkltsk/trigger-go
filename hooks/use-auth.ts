@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useProfilesStore } from '@/stores/profiles-store';
-import { isValidTokenFormat } from '@/lib/validation';
+import { isValidTokenFormat, verifyServerUrl, normalizeUrl } from '@/lib/validation';
+import { ApiError } from '@/lib/errors';
 import { fetchProjects, whoAmI } from '@/services/api/projects';
 import { API_BASE_URL } from '@/lib/constants';
-import { setSentryUser, clearSentryUser, Sentry } from '@/services/sentry';
+import { setSentryUser, clearSentryUser, Sentry, metrics } from '@/services/sentry';
 import { posthogCapture, posthogIdentify, posthogReset, posthogRegister } from '@/services/posthog';
 
 export function useAuth() {
@@ -34,15 +35,30 @@ export function useAuth() {
         }
 
         if (!isValidTokenFormat(apiKey)) {
+          metrics.count('auth.login.invalid_format', 1);
           setError('Invalid token format. Tokens should start with tr_pat_.');
           return false;
+        }
+
+        // Verify custom server URL before attempting authentication
+        if (customBaseUrl) {
+          const normalized = normalizeUrl(customBaseUrl.trim());
+          const verification = await verifyServerUrl(normalized);
+          if (!verification.ok) {
+            metrics.count('auth.login.invalid_server_url', 1);
+            setError(verification.error!);
+            return false;
+          }
+          customBaseUrl = normalized;
         }
 
         // Set credentials so the API client can use the token
         await setCredentials(apiKey, customBaseUrl);
 
         // Validate by fetching projects
+        metrics.count('auth.login.attempt', 1);
         Sentry.logger.info('Login attempt: validating PAT');
+        const loginStart = Date.now();
         await fetchProjects();
 
         // Auto-create a profile for this PAT if one doesn't already exist
@@ -73,6 +89,9 @@ export function useAuth() {
           await useProfilesStore.getState().setActiveProfile(profile.id);
         }
 
+        metrics.count('auth.login.success', 1);
+        metrics.distribution('auth.login.duration', Date.now() - loginStart, { unit: 'millisecond' });
+
         posthogCapture('user logged_in', {
           server_url: customBaseUrl || API_BASE_URL,
           has_custom_server: !!customBaseUrl,
@@ -80,9 +99,17 @@ export function useAuth() {
 
         return 'needs_project' as const;
       } catch (err) {
+        metrics.count('auth.login.failure', 1);
         Sentry.captureException(err, { extra: { action: 'login' } });
         await clearCredentials();
-        setError('Unable to connect. Please check your token and try again.');
+
+        if (err instanceof ApiError && err.isUnauthorized) {
+          setError('Invalid token. Please check your Personal Access Token and try again.');
+        } else if (err instanceof ApiError && err.status >= 500) {
+          setError('The server encountered an error. Please try again later.');
+        } else {
+          setError('Unable to connect. Please check your token and server URL.');
+        }
         return false;
       } finally {
         setIsLoading(false);
@@ -92,6 +119,7 @@ export function useAuth() {
   );
 
   const logout = useCallback(async () => {
+    metrics.count('auth.logout', 1);
     Sentry.logger.info('User logged out');
     posthogCapture('user logged_out');
     posthogReset();
@@ -102,6 +130,7 @@ export function useAuth() {
   const restoreSession = useCallback(async (): Promise<boolean> => {
     await loadCredentials();
     const restored = useAuthStore.getState().isAuthenticated;
+    metrics.count('auth.session_restore', 1, { attributes: { success: String(restored) } });
     if (restored) {
       posthogCapture('session restored', { had_project: !!useAuthStore.getState().projectRef });
     }
