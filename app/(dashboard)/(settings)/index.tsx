@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Pressable, View, ScrollView, Switch } from 'react-native';
+import { Pressable, View, ScrollView, Switch, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,7 +9,7 @@ import { ConfirmSheet, type ConfirmSheetRef } from '@/components/shared/confirm-
 import { FavoritesSection } from '@/components/dashboard/favorites-section';
 import { ContentContainer } from '@/components/layout';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
-import { CalendarClock, DollarSign, FolderKanban, Bell, KeyRound, LogOut, ChevronRight, Shield, Users, Rocket } from 'lucide-react-native';
+import { CalendarClock, DollarSign, FolderKanban, Bell, KeyRound, LogOut, ChevronRight, Shield, Users, Rocket, FileText, Code, CircleDot } from 'lucide-react-native';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { signOut } from '@/services/auth/sign-out';
 import { isBiometricAvailable, getBiometricType, getBiometricLabel, authenticate } from '@/services/biometric/biometric-auth';
@@ -130,6 +130,29 @@ export default function SettingsScreen() {
           ))}
         </View>
       )}
+
+      <Text className="text-mobile-tab font-semibold text-muted-foreground px-4 tablet:px-8 mt-6 tablet:mt-8 mb-2 uppercase tracking-wide" accessibilityRole="header">
+        About
+      </Text>
+      <View className="bg-card border-border mx-4 tablet:mx-8 rounded-md border overflow-hidden">
+        <MenuRow
+          icon={<Code size={20} color="#6B7280" />}
+          label="Source Code (Open Source)"
+          onPress={() => Linking.openURL('https://github.com/ndrkltsk/trigger-go')}
+        />
+        <View className="border-border border-t" />
+        <MenuRow
+          icon={<CircleDot size={20} color="#6B7280" />}
+          label="Report Bug & Get Support"
+          onPress={() => Linking.openURL('https://github.com/ndrkltsk/trigger-go/issues')}
+        />
+        <View className="border-border border-t" />
+        <MenuRow
+          icon={<FileText size={20} color="#6B7280" />}
+          label="Privacy Policy"
+          onPress={() => Linking.openURL('https://github.com/ndrkltsk/trigger-go/blob/develop/PRIVACY_POLICY.md')}
+        />
+      </View>
 
       <Text className="text-mobile-tab font-semibold text-muted-foreground px-4 tablet:px-8 mt-6 tablet:mt-8 mb-2 uppercase tracking-wide" accessibilityRole="header">
         Security
