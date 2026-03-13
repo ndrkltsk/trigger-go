@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Icon } from '@/components/ui/icon';
 import { RunCard } from '@/components/runs/run-card';
 import { JsonViewer } from '@/components/shared/json-viewer';
+import { ContentContainer } from '@/components/layout';
 import { TriggerTaskSheet, type TriggerTaskSheetRef } from '@/components/tasks/trigger-task-sheet';
 import { useTasksList } from '@/hooks/api/use-tasks';
 import { useTaskRuns } from '@/hooks/api/use-task-runs';
@@ -149,13 +150,16 @@ export default function TaskDetailScreen() {
   }
 
   const renderRunItem = ({ item }: { item: ListRunItem }) => (
-    <RunCard run={item} onPress={() => handleRunPress(item)} />
+    <ContentContainer variant="reading">
+      <RunCard run={item} onPress={() => handleRunPress(item)} />
+    </ContentContainer>
   );
 
   const ListHeader = (
+    <ContentContainer variant="reading">
     <View>
       {/* Task Info Header */}
-      <View className="px-4 py-4">
+      <View className="px-4 tablet:px-8 py-4">
         {/* Task name */}
         <View className="flex-row items-center gap-2 mb-1">
           <Icon as={FileCode} size={20} className="text-primary" />
@@ -249,6 +253,7 @@ export default function TaskDetailScreen() {
         </View>
       )}
     </View>
+    </ContentContainer>
   );
 
   return (

@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Icon } from '@/components/ui/icon';
 import { ConfirmSheet, type ConfirmSheetRef } from '@/components/shared/confirm-sheet';
+import { ContentContainer } from '@/components/layout';
 import { ScheduleFormSheet, type ScheduleFormSheetRef, type ScheduleFormValues } from '@/components/schedules/schedule-form-sheet';
 import { cronToHuman } from '@/lib/cron';
 import { formatDateTime, formatRelativeTime } from '@/lib/format';
@@ -181,8 +182,9 @@ export default function ScheduleDetailScreen() {
       </Stack.Toolbar>
 
       <ScrollView className="flex-1" contentInsetAdjustmentBehavior="automatic">
+        <ContentContainer variant="reading">
         {/* Header */}
-        <View className="px-4 py-4">
+        <View className="px-4 tablet:px-8 py-4">
           <Text className="text-lg font-bold text-foreground mb-1">
             {scheduleName}
           </Text>
@@ -282,6 +284,7 @@ export default function ScheduleDetailScreen() {
           </View>
         )}
 
+        </ContentContainer>
       </ScrollView>
 
       {/* Sticky bottom footer for custom schedules */}

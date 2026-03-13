@@ -3,7 +3,6 @@ import {
   View,
   Image,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Linking,
   ActivityIndicator,
@@ -16,6 +15,7 @@ import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { ContentContainer } from '@/components/layout';
 
 import { ProjectPickerSheet, type ProjectPickerSheetRef } from '@/components/shared/project-picker-sheet';
 import { useAuth } from '@/hooks/use-auth';
@@ -98,13 +98,14 @@ export default function LoginScreen() {
     <>
     <KeyboardAvoidingView
       className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerClassName="flex-1 justify-center px-6"
         keyboardShouldPersistTaps="handled"
       >
-        <View className="items-center gap-6">
+        <ContentContainer variant="form">
+        <View className="items-center gap-6 tablet:gap-8">
           {/* Logo */}
           <Image
             source={require('@/assets/icon.png')}
@@ -247,6 +248,7 @@ export default function LoginScreen() {
             <Text>Where do I find my Personal Access Token?</Text>
           </Button>
         </View>
+        </ContentContainer>
       </ScrollView>
     </KeyboardAvoidingView>
 

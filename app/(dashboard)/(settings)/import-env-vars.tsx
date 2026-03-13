@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { View, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, TextInput, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
+import { ContentContainer } from '@/components/layout';
 import { useImportEnvVars } from '@/hooks/api/use-envvars';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePreferencesStore, type Environment } from '@/stores/preferences-store';
@@ -54,19 +55,20 @@ export default function ImportEnvVarsScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-background"
     >
       <Stack.Screen options={{ title: 'Import Variables' }} />
       <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
-        <View className="p-4 gap-4">
+        <ContentContainer variant="reading">
+        <View className="p-4 tablet:p-8 gap-4">
           <Text className="text-sm text-muted-foreground">
             Paste your .env file content below. Each line should follow the format NAME=value.
           </Text>
 
           <TextInput
             className="bg-card border-border border rounded-lg p-3 text-foreground min-h-[200px]"
-            style={{ fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 13 }}
+            style={{ fontFamily: process.env.EXPO_OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 13 }}
             multiline
             textAlignVertical="top"
             placeholder={'NAME=value\nANOTHER=value2\n# Comments are ignored'}
@@ -158,6 +160,7 @@ export default function ImportEnvVarsScreen() {
             </Button>
           )}
         </View>
+        </ContentContainer>
       </ScrollView>
     </KeyboardAvoidingView>
   );

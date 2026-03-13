@@ -6,6 +6,7 @@ import { ArrowLeft, FolderKanban, RefreshCw } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { ContentContainer } from '@/components/layout';
 import { useProjects, useSwitchProject } from '@/hooks/api/use-projects';
 import { useProjectsStore } from '@/stores/projects-store';
 import { useProfilesStore } from '@/stores/profiles-store';
@@ -92,40 +93,42 @@ export default function SelectProjectScreen() {
       {/* Project list */}
       {!isLoading && !isError && (
         <ScrollView className="flex-1" contentContainerClassName="pb-8">
-          {Object.entries(grouped).map(([orgSlug, { org, projects: orgProjects }]) => (
-            <View key={orgSlug} className="mt-4">
-              <Text className="text-xs font-semibold text-muted-foreground px-6 mb-2 uppercase tracking-wide">
-                {org}
-              </Text>
-              <View className="bg-card border-border mx-4 rounded-md border overflow-hidden">
-                {orgProjects.map((project, index) => (
-                  <Pressable
-                    key={project.id}
-                    onPress={() => handleSelect(project)}
-                    className="flex-row items-center px-4 py-3.5 active:opacity-70"
-                    accessibilityRole="button"
-                    accessibilityLabel={`Select project ${project.name}`}
-                  >
-                    <Icon as={FolderKanban} className="text-primary mr-3" size={20} />
-                    <View className="flex-1">
-                      <Text className="text-sm font-medium text-foreground">{project.name}</Text>
-                      <Text className="text-xs text-muted-foreground">
-                        {project.externalRef}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
+          <ContentContainer variant="reading">
+            {Object.entries(grouped).map(([orgSlug, { org, projects: orgProjects }]) => (
+              <View key={orgSlug} className="mt-4 tablet:mt-6">
+                <Text className="text-xs font-semibold text-muted-foreground px-6 tablet:px-8 mb-2 uppercase tracking-wide">
+                  {org}
+                </Text>
+                <View className="bg-card border-border mx-4 tablet:mx-8 rounded-md border overflow-hidden">
+                  {orgProjects.map((project) => (
+                    <Pressable
+                      key={project.id}
+                      onPress={() => handleSelect(project)}
+                      className="flex-row items-center px-4 py-3.5 active:opacity-70"
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select project ${project.name}`}
+                    >
+                      <Icon as={FolderKanban} className="text-primary mr-3" size={20} />
+                      <View className="flex-1">
+                        <Text className="text-sm font-medium text-foreground">{project.name}</Text>
+                        <Text className="text-xs text-muted-foreground">
+                          {project.externalRef}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
-            </View>
-          ))}
+            ))}
 
-          {projects?.length === 0 && (
-            <View className="items-center px-6 mt-8">
-              <Text variant="muted" className="text-center">
-                No projects found. Create a project on the Trigger.dev dashboard first.
-              </Text>
-            </View>
-          )}
+            {projects?.length === 0 && (
+              <View className="items-center px-6 mt-8">
+                <Text variant="muted" className="text-center">
+                  No projects found. Create a project on the Trigger.dev dashboard first.
+                </Text>
+              </View>
+            )}
+          </ContentContainer>
         </ScrollView>
       )}
     </View>

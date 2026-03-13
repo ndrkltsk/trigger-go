@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ContentContainer } from '@/components/layout';
 import { Check } from 'lucide-react-native';
 import { useAuthStore } from '@/stores/auth-store';
 import { useProjectsStore } from '@/stores/projects-store';
@@ -64,8 +65,9 @@ export default function ProjectDetailScreen() {
     <>
       <Stack.Screen options={{ title: project.name }} />
       <ScrollView className="flex-1 bg-background">
+        <ContentContainer variant="reading">
         {/* Header section */}
-        <Card className="mx-4 mt-4 p-4">
+        <Card className="mx-4 tablet:mx-8 mt-4 tablet:mt-6 p-4">
           <Text className="text-lg font-semibold text-foreground">{project.name}</Text>
           <Text className="text-mobile-caption text-muted-foreground mt-1">
             {project.externalRef}
@@ -76,7 +78,7 @@ export default function ProjectDetailScreen() {
         </Card>
 
         {/* Switch / Current badge */}
-        <View className="mx-4 mt-4">
+        <View className="mx-4 tablet:mx-8 mt-4">
           {isCurrent ? (
             <View className="flex-row items-center gap-2 bg-green-500/10 rounded-lg px-4 py-3">
               <Check size={16} color="#22c55e" />
@@ -101,10 +103,10 @@ export default function ProjectDetailScreen() {
 
         {/* Secret API Keys section */}
         <View className="mt-6">
-          <Text className="text-mobile-tab font-semibold text-muted-foreground px-4 mb-2 uppercase tracking-wide">
+          <Text className="text-mobile-tab font-semibold text-muted-foreground px-4 tablet:px-8 mb-2 uppercase tracking-wide">
             Secret API Keys
           </Text>
-          <Card className="mx-4 py-0 overflow-hidden">
+          <Card className="mx-4 tablet:mx-8 py-0 overflow-hidden">
             {availableEnvironments.map((env, index) => (
               <View key={env}>
                 {index > 0 && <View className="border-border border-t" />}
@@ -112,10 +114,11 @@ export default function ProjectDetailScreen() {
               </View>
             ))}
           </Card>
-          <Text className="text-mobile-caption text-muted-foreground px-4 mt-2 mb-8">
+          <Text className="text-mobile-caption text-muted-foreground px-4 tablet:px-8 mt-2 mb-8">
             Secret keys are stored securely on-device and are required for deployments and schedules.
           </Text>
         </View>
+        </ContentContainer>
       </ScrollView>
     </>
   );

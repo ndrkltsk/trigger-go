@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CostStatCard } from '@/components/shared/cost-stat-card';
 import { TaskCostRow } from '@/components/shared/task-cost-row';
+import { ContentContainer } from '@/components/layout';
 import { useCostData, type CostPeriod } from '@/hooks/api/use-cost-data';
 import { useEnvironment } from '@/hooks/use-environment';
 import { ENV_LABELS, ENV_COLORS } from '@/lib/environment';
@@ -91,6 +92,7 @@ export default function CostDashboardScreen() {
           <RefreshControl refreshing={isManualRefreshing} onRefresh={handleRefresh} />
         }
       >
+        <ContentContainer variant="reading">
         <View className="pt-4 pb-8">
           <PeriodSelector selected={period} onChange={setPeriod} />
 
@@ -144,6 +146,7 @@ export default function CostDashboardScreen() {
             </>
           )}
         </View>
+        </ContentContainer>
       </ScrollView>
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Menu icon="circle.fill" tintColor={ENV_COLORS[currentEnvironment]} separateBackground>

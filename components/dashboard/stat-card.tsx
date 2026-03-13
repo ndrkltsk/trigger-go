@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,9 +19,15 @@ export const StatCard = React.memo(function StatCard({
   icon: Icon,
   onPress,
 }: StatCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const handleHoverIn = useCallback(() => setIsHovered(true), []);
+  const handleHoverOut = useCallback(() => setIsHovered(false), []);
+
   return (
     <Pressable
       onPress={onPress}
+      onHoverIn={handleHoverIn}
+      onHoverOut={handleHoverOut}
       className="flex-1 active:opacity-80"
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${count}`}
@@ -29,13 +35,16 @@ export const StatCard = React.memo(function StatCard({
     >
       <View
         className="bg-card border-border rounded-lg border p-3 min-h-[80px]"
-        style={{ borderLeftWidth: 4, borderLeftColor: color }}
+        style={[
+          { borderLeftWidth: 4, borderLeftColor: color, borderCurve: 'continuous' },
+          isHovered && { opacity: 0.85 },
+        ]}
       >
         <View className="flex-row items-center gap-1.5 mb-1">
           <Icon size={16} color={color} />
-          <Text className="text-mobile-caption text-muted-foreground">{label}</Text>
+          <Text className="text-mobile-caption tablet:text-tablet-caption text-muted-foreground">{label}</Text>
         </View>
-        <Text className="text-[22px] font-bold text-foreground">{count}</Text>
+        <Text className="text-[22px] tablet:text-tablet-title font-bold text-foreground" style={{ fontVariant: ['tabular-nums'] }}>{count}</Text>
       </View>
     </Pressable>
   );

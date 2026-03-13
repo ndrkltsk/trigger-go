@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, RefreshControl } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { TaskCard } from '@/components/tasks/task-card';
+import { ContentContainer } from '@/components/layout';
 import { useTasksList, type TaskListItem } from '@/hooks/api/use-tasks';
 import { useEnvironment } from '@/hooks/use-environment';
 import { ApiError } from '@/lib/errors';
@@ -97,7 +98,9 @@ export default function TasksListScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: TaskListItem }) => (
-      <TaskCard task={item} onPress={handleTaskPress} />
+      <ContentContainer>
+        <TaskCard task={item} onPress={handleTaskPress} />
+      </ContentContainer>
     ),
     [handleTaskPress]
   );
@@ -109,13 +112,14 @@ export default function TasksListScreen() {
         accessibilityLabel="Loading tasks"
         accessibilityRole="progressbar"
       >
-        <TaskSkeletonList />
+        <ContentContainer>
+          <TaskSkeletonList />
+        </ContentContainer>
       </View>
     );
   }
 
   if (isError) {
-    // Worker not found (404) means no worker deployed — show a friendly empty state
     if (error instanceof ApiError && error.isNotFound) {
       return (
         <View className="flex-1 bg-background">
@@ -130,69 +134,71 @@ export default function TasksListScreen() {
 
     return (
       <View className="flex-1 bg-background items-center justify-center px-4">
-        <Card className="w-full">
-          <CardContent>
-            <Text variant="h4" className="text-center mb-2">
-              Something went wrong
-            </Text>
-            <Text variant="muted" className="text-center mb-4">
-              {error?.message ?? 'Failed to load tasks'}
-            </Text>
-            <Button variant="outline" onPress={() => refetch()}>
-              <Text>Try again</Text>
-            </Button>
-          </CardContent>
-        </Card>
+        <ContentContainer variant="form">
+          <Card className="w-full">
+            <CardContent>
+              <Text variant="h4" className="text-center mb-2">
+                Something went wrong
+              </Text>
+              <Text variant="muted" className="text-center mb-4">
+                {error?.message ?? 'Failed to load tasks'}
+              </Text>
+              <Button variant="outline" onPress={() => refetch()}>
+                <Text>Try again</Text>
+              </Button>
+            </CardContent>
+          </Card>
+        </ContentContainer>
       </View>
     );
   }
 
   return (
     <View className="flex-1 bg-background">
-      <FlashList
-        data={tasks}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id || item.slug}
-        contentContainerStyle={{ paddingTop: 12 }}
-        contentInsetAdjustmentBehavior="automatic"
-        refreshControl={
-          <RefreshControl
-            refreshing={isManualRefreshing}
-            onRefresh={async () => {
-              setIsManualRefreshing(true);
-              try {
-                await refetch();
-              } finally {
-                setIsManualRefreshing(false);
-              }
-            }}
-          />
-        }
-        ListHeaderComponent={
-          (workerInfo || deploymentVersion) ? (
-            <WorkerInfoBanner
-              version={workerInfo?.version ?? deploymentVersion}
-              sdkVersion={workerInfo?.sdkVersion}
-              engine={workerInfo?.engine}
-              taskCount={tasks.length}
+        <FlashList
+          data={tasks}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id || item.slug}
+          contentContainerStyle={{ paddingTop: 12 }}
+          contentInsetAdjustmentBehavior="automatic"
+          refreshControl={
+            <RefreshControl
+              refreshing={isManualRefreshing}
+              onRefresh={async () => {
+                setIsManualRefreshing(true);
+                try {
+                  await refetch();
+                } finally {
+                  setIsManualRefreshing(false);
+                }
+              }}
             />
-          ) : tasks.length > 0 ? (
-            <View className="mx-4 mb-3 flex-row justify-end">
-              <Text className="text-[12px] text-muted-foreground">
-                {tasks.length} task{tasks.length !== 1 ? 's' : ''}
-              </Text>
-            </View>
-          ) : null
-        }
-        ListEmptyComponent={
-          <EmptyState
-            icon={ServerOff}
-            title="No tasks found"
-            description={`No tasks registered for the ${currentEnvironment} environment. Deploy your tasks first.`}
-          />
-        }
-        accessibilityLabel={`Tasks list, ${tasks.length} items`}
-      />
+          }
+          ListHeaderComponent={
+            (workerInfo || deploymentVersion) ? (
+              <WorkerInfoBanner
+                version={workerInfo?.version ?? deploymentVersion}
+                sdkVersion={workerInfo?.sdkVersion}
+                engine={workerInfo?.engine}
+                taskCount={tasks.length}
+              />
+            ) : tasks.length > 0 ? (
+              <View className="mx-4 mb-3 flex-row justify-end">
+                <Text className="text-[12px] text-muted-foreground">
+                  {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+                </Text>
+              </View>
+            ) : null
+          }
+          ListEmptyComponent={
+            <EmptyState
+              icon={ServerOff}
+              title="No tasks found"
+              description={`No tasks registered for the ${currentEnvironment} environment. Deploy your tasks first.`}
+            />
+          }
+          accessibilityLabel={`Tasks list, ${tasks.length} items`}
+        />
     </View>
   );
 }

@@ -22,7 +22,7 @@ export function EmptyState({ icon: Icon, title, description, actionLabel, onActi
       <Text variant="h3" className="text-center mb-2" accessibilityRole="header">
         {title}
       </Text>
-      <Text className="text-[14px] text-muted-foreground text-center mb-6">
+      <Text className="text-[14px] tablet:text-tablet-secondary text-muted-foreground text-center mb-6">
         {description}
       </Text>
       {actionLabel && onAction && (

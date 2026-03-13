@@ -19,8 +19,8 @@ export function RecentActivity({ runs, nextSchedule, isLoading }: RecentActivity
 
   return (
     <View className="mt-4">
-      <View className="flex-row items-center justify-between px-4 mb-2">
-        <Text className="text-base font-semibold text-foreground">Recent Activity</Text>
+      <View className="flex-row items-center justify-between px-4 tablet:px-8 mb-2">
+        <Text className="text-base tablet:text-tablet-body font-semibold text-foreground">Recent Activity</Text>
         <Pressable onPress={() => router.push('/(dashboard)/(runs)')}>
           <Text className="text-sm text-muted-foreground">See all runs</Text>
         </Pressable>

@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Icon } from '@/components/ui/icon';
 import { ConfirmSheet, type ConfirmSheetRef } from '@/components/shared/confirm-sheet';
+import { ContentContainer } from '@/components/layout';
 import { getDeploymentStatusConfig } from '@/lib/status-colors';
 import { useDeployment, usePromoteDeployment } from '@/hooks/api/use-deployments';
 import { useToast } from '@/stores/toast-store';
@@ -126,8 +127,9 @@ export default function DeploymentDetailScreen() {
       </Stack.Toolbar>
 
       <ScrollView className="flex-1" contentInsetAdjustmentBehavior="automatic">
+        <ContentContainer variant="reading">
         {/* Header */}
-        <View className="px-4 py-4">
+        <View className="px-4 tablet:px-8 py-4">
           <Text className="text-lg font-bold text-foreground mb-1">
             {deployment.version ?? deployment.shortCode ?? 'Deployment'}
           </Text>
@@ -221,6 +223,7 @@ export default function DeploymentDetailScreen() {
           </View>
         )}
 
+        </ContentContainer>
       </ScrollView>
 
       {/* Sticky bottom footer — only for deployed deployments */}

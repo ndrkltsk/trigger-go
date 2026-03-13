@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/empty-state';
 import { MissingSecretKey } from '@/components/shared/missing-secret-key';
 import { DeploymentCard } from '@/components/deployments/deployment-card';
+import { ContentContainer } from '@/components/layout';
 import { useDeployments } from '@/hooks/api/use-deployments';
 import { useEnvironment } from '@/hooks/use-environment';
 import { usePreferencesStore, type Environment } from '@/stores/preferences-store';
@@ -161,15 +162,17 @@ export default function DeploymentsSettingsScreen() {
           <RefreshControl refreshing={isManualRefreshing} onRefresh={handleRefresh} />
         }
       >
-        <View className="px-4 gap-3 pb-4">
-          {deployments.map((dep) => (
-            <DeploymentCard
-              key={dep.id}
-              deployment={dep}
-              onPress={handleDeploymentPress}
-            />
-          ))}
-        </View>
+        <ContentContainer variant="reading">
+          <View className="px-4 tablet:px-8 gap-3 pb-4">
+            {deployments.map((dep) => (
+              <DeploymentCard
+                key={dep.id}
+                deployment={dep}
+                onPress={handleDeploymentPress}
+              />
+            ))}
+          </View>
+        </ContentContainer>
       </ScrollView>
       {envToolbar}
     </View>

@@ -19,6 +19,7 @@ import { JsonViewer } from '@/components/shared/json-viewer';
 import { MetadataEditor } from '@/components/runs/metadata-editor';
 import { RunLifecycleTimeline } from '@/components/runs/run-lifecycle-timeline';
 import { RunAttemptsTab } from '@/components/runs/run-attempts-tab';
+import { ContentContainer } from '@/components/layout';
 import { useRun, useRunTrace, useCancelRun, useReplayRun, useUpdateRunMetadata } from '@/hooks/api/use-runs';
 import { useRealtimeRun } from '@/hooks/use-realtime-run';
 import { useFiltersStore } from '@/stores/filters-store';
@@ -160,16 +161,19 @@ export default function RunDetailScreen() {
         </Stack.Toolbar.Menu>
       </Stack.Toolbar>
 
-      <View className="px-4 pt-2 pb-1">
-        <SegmentedControl
-          values={['Overview', 'Timeline', 'Attempts']}
-          selectedIndex={selectedTabIndex}
-          onChange={({ nativeEvent }) => setSelectedTabIndex(nativeEvent.selectedSegmentIndex)}
-        />
-      </View>
+      <ContentContainer variant="reading">
+        <View className="px-4 tablet:px-8 pt-2 pb-1">
+          <SegmentedControl
+            values={['Overview', 'Timeline', 'Attempts']}
+            selectedIndex={selectedTabIndex}
+            onChange={({ nativeEvent }) => setSelectedTabIndex(nativeEvent.selectedSegmentIndex)}
+          />
+        </View>
+      </ContentContainer>
 
       {selectedTabIndex === 0 && (
         <ScrollView className="flex-1" contentInsetAdjustmentBehavior="automatic">
+          <ContentContainer variant="reading">
           <RunDetailHeader run={run} />
 
           {isActive && run.metadata && (
@@ -247,18 +251,23 @@ export default function RunDetailScreen() {
               </View>
             </View>
           )}
+          </ContentContainer>
         </ScrollView>
       )}
 
       {selectedTabIndex === 1 && (
         <ScrollView className="flex-1" contentInsetAdjustmentBehavior="automatic">
-          <RunLifecycleTimeline run={run} traceData={traceData ?? null} />
+          <ContentContainer variant="reading">
+            <RunLifecycleTimeline run={run} traceData={traceData ?? null} />
+          </ContentContainer>
         </ScrollView>
       )}
 
       {selectedTabIndex === 2 && (
         <ScrollView className="flex-1" contentInsetAdjustmentBehavior="automatic">
-          <RunAttemptsTab run={run} error={runError} traceData={traceData ?? null} />
+          <ContentContainer variant="reading">
+            <RunAttemptsTab run={run} error={runError} traceData={traceData ?? null} />
+          </ContentContainer>
         </ScrollView>
       )}
 

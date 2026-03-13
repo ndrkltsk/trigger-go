@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,9 @@ export const RunCard = React.memo(function RunCard({
   isSelected?: boolean;
   onToggleSelect?: (runId: string) => void;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const handleHoverIn = useCallback(() => setIsHovered(true), []);
+  const handleHoverOut = useCallback(() => setIsHovered(false), []);
   const config = getStatusConfig(run.status);
   const overflowCount = (run.tags?.length ?? 0) - MAX_VISIBLE_TAGS;
 
@@ -37,6 +40,8 @@ export const RunCard = React.memo(function RunCard({
   return (
     <Pressable
       onPress={handlePress}
+      onHoverIn={handleHoverIn}
+      onHoverOut={handleHoverOut}
       className="active:opacity-80"
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
@@ -44,7 +49,10 @@ export const RunCard = React.memo(function RunCard({
     >
       <View
         className="bg-card border-border mx-4 mb-1.5 rounded-md border py-3 pl-4 pr-3 flex-row"
-        style={{ borderLeftWidth: 3, borderLeftColor: config.color }}
+        style={[
+          { borderLeftWidth: 3, borderLeftColor: config.color, borderCurve: 'continuous' },
+          isHovered && { opacity: 0.85 },
+        ]}
       >
         {isSelectMode && (
           <View className="justify-center mr-3">
@@ -58,7 +66,7 @@ export const RunCard = React.memo(function RunCard({
         <View className="flex-1">
         {/* Top row: task identifier */}
         <View className="flex-row items-center gap-2 mb-1">
-          <Text className="text-mobile-body font-bold text-foreground" numberOfLines={1}>
+          <Text className="text-mobile-body tablet:text-tablet-body font-bold text-foreground" numberOfLines={1}>
             {run.taskIdentifier}
           </Text>
         </View>

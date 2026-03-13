@@ -20,3 +20,11 @@ export const MOBILE = {
     border: '#3A3A3C',
   },
 } as const;
+
+export const TABLET = {
+  maxContentWidth: 960,
+  maxReadingWidth: 720,
+  maxFormWidth: 480,
+  spacing: { xs: 6, sm: 12, md: 16, lg: 24, xl: 32 },
+  padding: { screen: 32 },
+} as const;

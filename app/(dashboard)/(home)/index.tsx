@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { StatCard, StatCardSkeleton } from '@/components/dashboard/stat-card';
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
+import { ContentContainer } from '@/components/layout';
 import { useDashboard } from '@/hooks/api/use-dashboard';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { useFiltersStore } from '@/stores/filters-store';
 import { Activity, AlertTriangle, CheckCircle, Clock } from 'lucide-react-native';
 
@@ -41,6 +43,8 @@ export default function HomeScreen() {
     }
   }, [refetchAll]);
 
+  const { isTablet } = useDeviceLayout();
+
   if (isError) {
     return (
       <View className="flex-1 bg-background items-center justify-center px-8">
@@ -62,23 +66,34 @@ export default function HomeScreen() {
         <RefreshControl refreshing={isManualRefreshing} onRefresh={handleRefresh} />
       }
     >
-      {/* Stats Grid */}
-      <View className="px-4 pt-4">
-        <Text className="text-base font-semibold text-foreground mb-3" accessibilityRole="header">Last 24 hours</Text>
-        {isLoading ? (
-          <View className="gap-2" accessibilityLabel="Loading dashboard data" accessibilityRole="progressbar">
-            <View className="flex-row gap-2">
-              <StatCardSkeleton />
-              <StatCardSkeleton />
+      <ContentContainer>
+        {/* Stats Grid */}
+        <View className="px-4 tablet:px-8 pt-4">
+          <Text className="text-base tablet:text-tablet-body font-semibold text-foreground mb-3" accessibilityRole="header">Last 24 hours</Text>
+          {isLoading ? (
+            <View accessibilityLabel="Loading dashboard data" accessibilityRole="progressbar">
+              {isTablet ? (
+                <View className="flex-row gap-3">
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                </View>
+              ) : (
+                <View className="gap-2">
+                  <View className="flex-row gap-2">
+                    <StatCardSkeleton />
+                    <StatCardSkeleton />
+                  </View>
+                  <View className="flex-row gap-2">
+                    <StatCardSkeleton />
+                    <StatCardSkeleton />
+                  </View>
+                </View>
+              )}
             </View>
-            <View className="flex-row gap-2">
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-            </View>
-          </View>
-        ) : (
-          <View className="gap-2">
-            <View className="flex-row gap-2">
+          ) : isTablet ? (
+            <View className="flex-row gap-3 tablet:gap-4">
               <StatCard
                 label="Running"
                 count={stats.running}
@@ -93,8 +108,6 @@ export default function HomeScreen() {
                 icon={AlertTriangle}
                 onPress={() => handleStatPress(['FAILED', 'CRASHED', 'SYSTEM_FAILURE', 'TIMED_OUT'])}
               />
-            </View>
-            <View className="flex-row gap-2">
               <StatCard
                 label="Completed"
                 count={stats.completed}
@@ -110,25 +123,60 @@ export default function HomeScreen() {
                 onPress={() => handleStatPress(['QUEUED', 'PENDING_VERSION', 'DELAYED', 'FROZEN'])}
               />
             </View>
-          </View>
-        )}
-      </View>
+          ) : (
+            <View className="gap-2">
+              <View className="flex-row gap-2">
+                <StatCard
+                  label="Running"
+                  count={stats.running}
+                  color="#3B82F6"
+                  icon={Activity}
+                  onPress={() => handleStatPress(['EXECUTING', 'REATTEMPTING'])}
+                />
+                <StatCard
+                  label="Failed"
+                  count={stats.failed}
+                  color="#EF4444"
+                  icon={AlertTriangle}
+                  onPress={() => handleStatPress(['FAILED', 'CRASHED', 'SYSTEM_FAILURE', 'TIMED_OUT'])}
+                />
+              </View>
+              <View className="flex-row gap-2">
+                <StatCard
+                  label="Completed"
+                  count={stats.completed}
+                  color="#22C55E"
+                  icon={CheckCircle}
+                  onPress={() => handleStatPress(['COMPLETED'])}
+                />
+                <StatCard
+                  label="Queued"
+                  count={stats.queued}
+                  color="#8B95A5"
+                  icon={Clock}
+                  onPress={() => handleStatPress(['QUEUED', 'PENDING_VERSION', 'DELAYED', 'FROZEN'])}
+                />
+              </View>
+            </View>
+          )}
+        </View>
 
-      {/* Quick Actions */}
-      <View className="mt-4">
-        <Text className="text-base font-semibold text-foreground px-4 mb-2" accessibilityRole="header">Quick Actions</Text>
-        <QuickActions />
-      </View>
+        {/* Quick Actions */}
+        <View className="mt-4 tablet:mt-6">
+          <Text className="text-base tablet:text-tablet-body font-semibold text-foreground px-4 tablet:px-8 mb-2" accessibilityRole="header">Quick Actions</Text>
+          <QuickActions />
+        </View>
 
-      {/* Recent Activity */}
-      <RecentActivity
-        runs={recentActivity}
-        nextSchedule={nextSchedule}
-        isLoading={isLoading}
-      />
+        {/* Recent Activity */}
+        <RecentActivity
+          runs={recentActivity}
+          nextSchedule={nextSchedule}
+          isLoading={isLoading}
+        />
 
-      {/* Bottom padding */}
-      <View className="h-8" />
+        {/* Bottom padding */}
+        <View className="h-8" />
+      </ContentContainer>
     </ScrollView>
   );
 }

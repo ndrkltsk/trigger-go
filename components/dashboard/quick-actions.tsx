@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { AlertTriangle, Zap, CalendarClock, Rocket } from 'lucide-react-native';
 import { useFiltersStore } from '@/stores/filters-store';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 const FAILED_STATUSES = ['FAILED', 'CRASHED', 'SYSTEM_FAILURE', 'TIMED_OUT'];
 
 export function QuickActions() {
   const router = useRouter();
+  const { isTablet } = useDeviceLayout();
 
   const actions = [
     {
@@ -39,6 +41,26 @@ export function QuickActions() {
       onPress: () => router.push('/(dashboard)/(settings)/deployments'),
     },
   ];
+
+  if (isTablet) {
+    return (
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 32, gap: 8 }}>
+        {actions.map((action) => (
+          <Button
+            key={action.label}
+            variant="outline"
+            size="sm"
+            onPress={action.onPress}
+            className="flex-row items-center gap-1.5 rounded-full h-8 px-3"
+            accessibilityLabel={`Go to ${action.label}`}
+          >
+            <action.icon size={13} color={action.color} />
+            <Text className="text-xs font-medium text-foreground">{action.label}</Text>
+          </Button>
+        ))}
+      </View>
+    );
+  }
 
   return (
     <ScrollView

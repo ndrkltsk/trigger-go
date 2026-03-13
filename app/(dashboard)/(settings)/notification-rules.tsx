@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { View, FlatList, Pressable } from 'react-native';
+import { ContentContainer } from '@/components/layout';
 import { Stack } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
@@ -39,17 +40,19 @@ export default function NotificationRulesScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: NotificationRule }) => (
-      <RuleListItem
-        rule={item}
-        onToggle={() => toggleRule(item.id)}
-        onEdit={() => handleEdit(item)}
-        onDelete={() => {
-          deleteTargetRef.current = item;
-          deleteSheetRef.current?.present({
-            description: `Are you sure you want to delete "${item.name}"? This action cannot be undone.`,
-          });
-        }}
-      />
+      <ContentContainer variant="reading">
+        <RuleListItem
+          rule={item}
+          onToggle={() => toggleRule(item.id)}
+          onEdit={() => handleEdit(item)}
+          onDelete={() => {
+            deleteTargetRef.current = item;
+            deleteSheetRef.current?.present({
+              description: `Are you sure you want to delete "${item.name}"? This action cannot be undone.`,
+            });
+          }}
+        />
+      </ContentContainer>
     ),
     [toggleRule, handleEdit]
   );
