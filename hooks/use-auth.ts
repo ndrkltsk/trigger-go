@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useProfilesStore } from '@/stores/profiles-store';
-import { isValidTokenFormat } from '@/lib/validation';
+import { isValidTokenFormat, verifyServerUrl, normalizeUrl } from '@/lib/validation';
+import { ApiError } from '@/lib/errors';
 import { fetchProjects, whoAmI } from '@/services/api/projects';
 import { API_BASE_URL } from '@/lib/constants';
 import { setSentryUser, clearSentryUser, Sentry, metrics } from '@/services/sentry';
@@ -37,6 +38,18 @@ export function useAuth() {
           metrics.count('auth.login.invalid_format', 1);
           setError('Invalid token format. Tokens should start with tr_pat_.');
           return false;
+        }
+
+        // Verify custom server URL before attempting authentication
+        if (customBaseUrl) {
+          const normalized = normalizeUrl(customBaseUrl.trim());
+          const verification = await verifyServerUrl(normalized);
+          if (!verification.ok) {
+            metrics.count('auth.login.invalid_server_url', 1);
+            setError(verification.error!);
+            return false;
+          }
+          customBaseUrl = normalized;
         }
 
         // Set credentials so the API client can use the token
@@ -89,7 +102,14 @@ export function useAuth() {
         metrics.count('auth.login.failure', 1);
         Sentry.captureException(err, { extra: { action: 'login' } });
         await clearCredentials();
-        setError('Unable to connect. Please check your token and try again.');
+
+        if (err instanceof ApiError && err.isUnauthorized) {
+          setError('Invalid token. Please check your Personal Access Token and try again.');
+        } else if (err instanceof ApiError && err.status >= 500) {
+          setError('The server encountered an error. Please try again later.');
+        } else {
+          setError('Unable to connect. Please check your token and server URL.');
+        }
         return false;
       } finally {
         setIsLoading(false);
