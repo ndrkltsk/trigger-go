@@ -1,4 +1,5 @@
 import * as LocalAuthentication from 'expo-local-authentication';
+import { metrics } from '@/services/sentry';
 
 export type BiometricType = 'face-id' | 'touch-id' | 'fingerprint' | 'none';
 
@@ -40,6 +41,7 @@ export function getBiometricLabel(type: BiometricType): string {
 export async function authenticate(
   reason: string = 'Authenticate to unlock the app'
 ): Promise<{ success: boolean; error?: string }> {
+  metrics.count('biometric.auth.attempt', 1);
   try {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: reason,
@@ -48,14 +50,17 @@ export async function authenticate(
     });
 
     if (result.success) {
+      metrics.count('biometric.auth.success', 1);
       return { success: true };
     }
 
+    metrics.count('biometric.auth.failure', 1);
     return {
       success: false,
       error: result.error ?? 'Authentication failed',
     };
   } catch {
+    metrics.count('biometric.auth.failure', 1, { attributes: { reason: 'unavailable' } });
     return { success: false, error: 'Authentication unavailable' };
   }
 }

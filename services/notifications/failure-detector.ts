@@ -6,6 +6,7 @@ import { usePreferencesStore } from '@/stores/preferences-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { useNotificationRulesStore, type NotificationEvent } from '@/stores/notification-rules-store';
 import { matchRules, hasHighSeverityMatch } from './rule-matcher';
+import { metrics } from '@/services/sentry';
 
 const LAST_CHECKED_KEY = 'notification_lastCheckedAt';
 const NOTIFICATION_COUNT_KEY = 'notification_minuteCount';
@@ -120,8 +121,16 @@ function getNotificationTitle(run: ListRunItem): string {
 }
 
 async function scheduleNotification(run: ListRunItem): Promise<void> {
-  if (!checkRateLimit()) return;
-  if (!shouldNotifyForRun(run)) return;
+  if (!checkRateLimit()) {
+    metrics.count('notifications.rate_limited', 1);
+    return;
+  }
+  if (!shouldNotifyForRun(run)) {
+    if (isInQuietHours()) {
+      metrics.count('notifications.quiet_hours_suppressed', 1);
+    }
+    return;
+  }
 
   await Notifications.scheduleNotificationAsync({
     content: {
@@ -133,6 +142,7 @@ async function scheduleNotification(run: ListRunItem): Promise<void> {
     trigger: null,
   });
 
+  metrics.count('notifications.scheduled', 1, { attributes: { status: run.status } });
   incrementNotificationCount();
 }
 
@@ -152,6 +162,7 @@ export async function checkForNewFailures(): Promise<void> {
   if (notifyOnDelays) statuses.push(...DELAY_STATUSES);
   if (statuses.length === 0) return;
 
+  metrics.count('notifications.check', 1);
   try {
     const result = await listProjectRuns(projectRef, {
       status: statuses,
@@ -175,11 +186,15 @@ export async function checkForNewFailures(): Promise<void> {
       setLastCheckedAt(mostRecent.createdAt);
     }
 
+    if (newFailures.length > 0) {
+      metrics.distribution('notifications.new_failures', newFailures.length);
+    }
+
     // Schedule notifications for new failures
     for (const run of newFailures) {
       await scheduleNotification(run);
     }
   } catch {
-    // Silently fail - will retry on next poll
+    metrics.count('notifications.check.error', 1);
   }
 }

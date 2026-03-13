@@ -1,5 +1,6 @@
 import EventSource from 'react-native-sse';
 import type { RetrieveRunResponse } from '@/services/api/runs';
+import { metrics } from '@/services/sentry';
 
 export interface RunSubscription {
   onUpdate: (callback: (run: RetrieveRunResponse) => void) => void;
@@ -20,15 +21,18 @@ export function subscribeToRun(
     },
   });
 
+  metrics.count('realtime.subscription.open', 1);
+
   return {
     onUpdate(callback) {
       es.addEventListener('update', (event) => {
         if (event.data) {
           try {
             const run = JSON.parse(event.data) as RetrieveRunResponse;
+            metrics.count('realtime.message.received', 1);
             callback(run);
           } catch {
-            // Ignore malformed data
+            metrics.count('realtime.message.parse_error', 1);
           }
         }
       });
@@ -36,12 +40,14 @@ export function subscribeToRun(
 
     onError(callback) {
       es.addEventListener('error', (event) => {
+        metrics.count('realtime.subscription.error', 1);
         const err = event as { type: string; message?: string };
         callback(err);
       });
     },
 
     close() {
+      metrics.count('realtime.subscription.close', 1);
       es.close();
     },
   };

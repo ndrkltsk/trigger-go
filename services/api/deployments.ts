@@ -4,6 +4,7 @@ import { getBaseUrl } from '@/stores/auth-store';
 import { getSecretKeyForEnv } from '@/stores/secret-keys-store';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { MissingSecretKeyError } from '@/lib/errors';
+import { metrics } from '@/services/sentry';
 import type { operations } from './generated-types';
 
 export type DeploymentDetail =
@@ -89,6 +90,7 @@ export async function retrieveDeployment(
 export async function promoteDeployment(
   version: string
 ): Promise<PromoteDeploymentResult> {
+  metrics.count('api.deployments.promote', 1, { attributes: { version } });
   const client = getSecretApiClient();
   const { data, error, response } = await client.POST(
     '/api/v1/deployments/{version}/promote',

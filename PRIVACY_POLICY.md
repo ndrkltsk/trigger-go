@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated:** March 12, 2026
+**Last updated:** March 13, 2026
 
 TriggerGo ("the App") is an unofficial, independent mobile client for the Trigger.dev platform. This privacy policy explains how the App handles your data.
 
@@ -15,16 +15,17 @@ We use **PostHog** to understand how the App is used and improve the experience.
 
 Analytics data is sent to PostHog's EU infrastructure (`eu.i.posthog.com`). PostHog does not collect your Trigger.dev tokens or any data from your Trigger.dev account. For more information, see [PostHog's Privacy Policy](https://posthog.com/privacy).
 
-## Error Tracking (Sentry)
+## Error Tracking & Metrics (Sentry)
 
-We use **Sentry** to detect and fix crashes and errors. Sentry collects:
+We use **Sentry** to detect and fix crashes, monitor app health, and track performance. Sentry collects:
 
 - Crash reports and error logs with stack traces
 - Device type, OS version, and app version
 - IP address (anonymized by Sentry)
 - Session replay data for a small percentage of sessions (10%) and for sessions where an error occurs, to help us reproduce and fix bugs
+- **Application metrics** — Aggregate counters and timing distributions for API calls, authentication events, real-time connections, notification delivery, and network state changes. These metrics contain no personal data; they track operational counts (e.g. "how many API calls failed") and durations (e.g. "how long did a login take"), along with non-identifying attributes such as environment name or HTTP status code.
 
-Error tracking data is sent to Sentry's EU infrastructure (`de.sentry.io`). Sentry does not collect your Trigger.dev tokens or any data from your Trigger.dev account. For more information, see [Sentry's Privacy Policy](https://sentry.io/privacy/).
+Error tracking and metrics data is sent to Sentry's EU infrastructure (`de.sentry.io`). Sentry does not collect your Trigger.dev tokens or any data from your Trigger.dev account. For more information, see [Sentry's Privacy Policy](https://sentry.io/privacy/).
 
 ## No First-Party Data Collection
 

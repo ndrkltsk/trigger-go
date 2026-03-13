@@ -3,6 +3,7 @@ import { listSchedules, type ScheduleObject } from './schedules';
 import { listDeployments, type DeploymentListItem } from './deployments';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import { metrics } from '@/services/sentry';
 
 export interface DashboardStats {
   running: number;
@@ -34,10 +35,13 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   let failed = 0;
   let completed = 0;
   let queued = 0;
+  let paginationLoops = 0;
 
   let after: string | undefined;
+  const statsStart = Date.now();
 
   do {
+    paginationLoops++;
     const result = await listProjectRuns(projectRef, {
       pageSize: 100,
       createdAtPeriod: '24h',
@@ -55,6 +59,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
     after = result.pagination?.next ?? undefined;
   } while (after);
+
+  metrics.distribution('api.dashboard.stats.duration', Date.now() - statsStart, { unit: 'millisecond' });
+  metrics.distribution('api.dashboard.stats.pagination_loops', paginationLoops);
 
   return { running, failed, completed, queued };
 }

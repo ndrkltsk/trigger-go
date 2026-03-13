@@ -1,6 +1,7 @@
 import { getApiClient, getJwtApiClient } from './client';
 import { ApiError } from '@/lib/errors';
 import { getAuthToken, getBaseUrl, useAuthStore } from '@/stores/auth-store';
+import { metrics } from '@/services/sentry';
 import type { components } from './generated-types';
 
 export type TriggerTaskRequestBody = components['schemas']['TriggerTaskRequestBody'];
@@ -71,6 +72,7 @@ export async function triggerTask(
   taskIdentifier: string,
   params: TriggerTaskParams = {}
 ): Promise<TriggerTaskResponse> {
+  metrics.count('api.tasks.trigger', 1, { attributes: { task: taskIdentifier } });
   const client = await getJwtApiClient();
 
   const body: TriggerTaskRequestBody = {
@@ -97,6 +99,8 @@ export async function triggerTask(
 export async function batchTriggerTasks(
   items: BatchTriggerTaskRequestBodyItem[]
 ): Promise<BatchTriggerTaskResponse> {
+  metrics.count('api.tasks.batch_trigger', 1);
+  metrics.distribution('api.tasks.batch_trigger.size', items.length);
   const client = getApiClient();
 
   const { data, error, response } = await client.POST('/api/v1/tasks/batch', {

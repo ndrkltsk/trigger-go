@@ -1,6 +1,7 @@
 import { listProjectRuns } from '@/services/api/runs';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import { metrics } from '@/services/sentry';
 
 export type HealthIndicator = 'green' | 'yellow' | 'red';
 
@@ -54,6 +55,7 @@ export async function fetchWidgetData(): Promise<WidgetFetchResult> {
     let queuedCount = 0;
 
     let after: string | undefined;
+    const widgetStart = Date.now();
 
     do {
       const result = await listProjectRuns(projectRef, {
@@ -73,13 +75,17 @@ export async function fetchWidgetData(): Promise<WidgetFetchResult> {
       after = result.pagination?.next ?? undefined;
     } while (after);
 
+    const health = computeHealthIndicator(failedCount);
+    metrics.distribution('widget.fetch.duration', Date.now() - widgetStart, { unit: 'millisecond' });
+    metrics.count('widget.fetch.success', 1, { attributes: { health } });
+
     return {
       success: true,
       data: {
         activeCount,
         failedCount,
         queuedCount,
-        health: computeHealthIndicator(failedCount),
+        health,
         lastUpdated: new Date(),
       },
     };
@@ -87,6 +93,7 @@ export async function fetchWidgetData(): Promise<WidgetFetchResult> {
     const error = err as { status?: number; message?: string };
 
     if (error.status === 401) {
+      metrics.count('widget.fetch.error', 1, { attributes: { type: 'auth' } });
       return {
         success: false,
         error: { type: 'auth', message: 'Sign in required' },
@@ -98,12 +105,14 @@ export async function fetchWidgetData(): Promise<WidgetFetchResult> {
       error.message?.includes('fetch') ||
       error.message?.includes('timeout')
     ) {
+      metrics.count('widget.fetch.error', 1, { attributes: { type: 'network' } });
       return {
         success: false,
         error: { type: 'network', message: 'Unable to connect' },
       };
     }
 
+    metrics.count('widget.fetch.error', 1, { attributes: { type: 'unknown' } });
     return {
       success: false,
       error: { type: 'unknown', message: error.message ?? 'Unknown error' },

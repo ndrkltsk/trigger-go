@@ -5,9 +5,11 @@ import { useEffect } from 'react';
 import { ApiError } from '@/lib/errors';
 import { useAuthStore } from '@/stores/auth-store';
 import { useNetworkStore } from '@/stores/network-store';
+import { metrics } from '@/services/sentry';
 
 function handleUnauthorized(error: Error) {
   if (error instanceof ApiError && error.isUnauthorized) {
+    metrics.count('query.unauthorized_logout', 1);
     useAuthStore.getState().clearCredentials();
   }
 }
@@ -61,6 +63,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     return useNetworkStore.subscribe((state, prevState) => {
       if (state.isConnected && !prevState.isConnected) {
+        metrics.count('query.online_resume', 1);
         queryClient.resumePausedMutations().then(() => {
           queryClient.invalidateQueries();
         });

@@ -1,6 +1,7 @@
 import { getSecretApiClient } from './client';
 import { ApiError } from '@/lib/errors';
 import type { components } from './generated-types';
+import { metrics } from '@/services/sentry';
 
 export type ScheduleObject = components['schemas']['ScheduleObject'];
 export type ListSchedulesResult = components['schemas']['ListSchedulesResult'];
@@ -57,6 +58,7 @@ export async function retrieveSchedule(
 export async function activateSchedule(
   scheduleId: string
 ): Promise<ScheduleObject> {
+  metrics.count('api.schedules.activate', 1);
   const client = getSecretApiClient();
   const { data, error, response } = await client.POST(
     '/api/v1/schedules/{schedule_id}/activate',
@@ -78,6 +80,7 @@ export async function activateSchedule(
 export async function createSchedule(
   options: CreateScheduleOptions
 ): Promise<ScheduleObject> {
+  metrics.count('api.schedules.create', 1);
   const client = getSecretApiClient();
   const { data, error, response } = await client.POST('/api/v1/schedules', {
     body: options,
@@ -95,6 +98,7 @@ export async function updateSchedule(
   scheduleId: string,
   options: UpdateScheduleOptions
 ): Promise<ScheduleObject> {
+  metrics.count('api.schedules.update', 1);
   const client = getSecretApiClient();
   const { data, error, response } = await client.PUT(
     '/api/v1/schedules/{schedule_id}',
@@ -113,6 +117,7 @@ export async function updateSchedule(
 }
 
 export async function deleteSchedule(scheduleId: string): Promise<void> {
+  metrics.count('api.schedules.delete', 1);
   const client = getSecretApiClient();
   const { error, response } = await client.DELETE(
     '/api/v1/schedules/{schedule_id}',
@@ -132,6 +137,7 @@ export async function deleteSchedule(scheduleId: string): Promise<void> {
 export async function deactivateSchedule(
   scheduleId: string
 ): Promise<ScheduleObject> {
+  metrics.count('api.schedules.deactivate', 1);
   const client = getSecretApiClient();
   const { data, error, response } = await client.POST(
     '/api/v1/schedules/{schedule_id}/deactivate',
