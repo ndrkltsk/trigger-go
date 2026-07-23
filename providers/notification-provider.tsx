@@ -5,6 +5,10 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePreferencesStore } from '@/stores/preferences-store';
 import { checkForNewFailures } from '@/services/notifications/failure-detector';
+import {
+  registerBackgroundNotificationCheck,
+  unregisterBackgroundNotificationCheck,
+} from '@/services/notifications/background-task';
 
 // Configure how notifications appear when the app is in the foreground
 Notifications.setNotificationHandler({
@@ -129,6 +133,46 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       unsubAuth();
     };
   }, [setupAndroidChannel, requestPermissions]);
+
+  // Background task lifecycle
+  useEffect(() => {
+    const syncBackgroundTask = async () => {
+      const { token } = useAuthStore.getState();
+      const { notificationsEnabled, backgroundCheckEnabled } =
+        usePreferencesStore.getState();
+
+      if (token && notificationsEnabled && backgroundCheckEnabled) {
+        await registerBackgroundNotificationCheck();
+      } else {
+        await unregisterBackgroundNotificationCheck();
+      }
+    };
+
+    syncBackgroundTask();
+
+    const unsubAuth = useAuthStore.subscribe((state, prevState) => {
+      if (state.token !== prevState.token) {
+        syncBackgroundTask();
+      }
+    });
+
+    const unsubPrefs = usePreferencesStore.subscribe(
+      (state, prevState) => {
+        if (
+          state.notificationsEnabled !== prevState.notificationsEnabled ||
+          state.backgroundCheckEnabled !== prevState.backgroundCheckEnabled ||
+          state.backgroundCheckInterval !== prevState.backgroundCheckInterval
+        ) {
+          syncBackgroundTask();
+        }
+      }
+    );
+
+    return () => {
+      unsubAuth();
+      unsubPrefs();
+    };
+  }, []);
 
   return <>{children}</>;
 }

@@ -1,3 +1,4 @@
+import '@/services/notifications/background-task';
 import '@/global.css';
 import { useEffect, useRef } from 'react';
 import { PortalHost } from '@rn-primitives/portal';

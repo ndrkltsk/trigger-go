@@ -15,7 +15,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["fetch"]
       }
     },
     "android": {
@@ -30,6 +31,7 @@
       "bundler": "metro"
     },
     "plugins": [
+      "expo-background-fetch",
       "expo-screen-orientation",
       "expo-router",
       "expo-secure-store",

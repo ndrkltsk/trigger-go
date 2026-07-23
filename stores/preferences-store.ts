@@ -3,6 +3,7 @@ import { storage } from '@/lib/storage';
 import { posthogCapture, posthogRegister } from '@/services/posthog';
 
 export type Environment = 'dev' | 'staging' | 'prod' | 'preview';
+export type BackgroundCheckInterval = '15' | '30' | '60';
 
 export const ALL_CANDIDATE_ENVIRONMENTS: Environment[] = ['dev', 'staging', 'prod', 'preview'];
 
@@ -24,9 +25,13 @@ interface PreferencesState {
   quietHoursEnabled: boolean;
   quietHoursStart: string;
   quietHoursEnd: string;
+  backgroundCheckEnabled: boolean;
+  backgroundCheckInterval: BackgroundCheckInterval;
   biometricLockEnabled: boolean;
   biometricForSensitiveActions: boolean;
 
+  setBackgroundCheckEnabled: (enabled: boolean) => void;
+  setBackgroundCheckInterval: (interval: BackgroundCheckInterval) => void;
   setHapticFeedback: (enabled: boolean) => void;
   setEnvironment: (env: Environment) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
@@ -53,8 +58,22 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   quietHoursEnabled: false,
   quietHoursStart: '22:00',
   quietHoursEnd: '07:00',
+  backgroundCheckEnabled: true,
+  backgroundCheckInterval: '15',
   biometricLockEnabled: false,
   biometricForSensitiveActions: false,
+
+  setBackgroundCheckEnabled: (enabled) => {
+    storage.set('backgroundCheckEnabled', enabled);
+    posthogCapture('background_check toggled', { enabled });
+    set({ backgroundCheckEnabled: enabled });
+  },
+
+  setBackgroundCheckInterval: (interval) => {
+    storage.set('backgroundCheckInterval', interval);
+    posthogCapture('background_check_interval changed', { interval });
+    set({ backgroundCheckInterval: interval });
+  },
 
   setHapticFeedback: (enabled) => {
     storage.set('hapticFeedbackEnabled', enabled);
@@ -146,6 +165,10 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
     const quietHoursStart = storage.getString('quietHoursStart') ?? '22:00';
     const quietHoursEnd = storage.getString('quietHoursEnd') ?? '07:00';
 
+    const backgroundCheckEnabled = storage.getBoolean('backgroundCheckEnabled') ?? true;
+    const backgroundCheckInterval =
+      (storage.getString('backgroundCheckInterval') as BackgroundCheckInterval) ?? '15';
+
     const biometricLockEnabled = storage.getBoolean('biometricLockEnabled') ?? false;
     const biometricForSensitiveActions = storage.getBoolean('biometricForSensitiveActions') ?? false;
 
@@ -160,6 +183,8 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
       quietHoursEnabled,
       quietHoursStart,
       quietHoursEnd,
+      backgroundCheckEnabled,
+      backgroundCheckInterval,
       biometricLockEnabled,
       biometricForSensitiveActions,
     });

@@ -43,6 +43,29 @@ jest.mock('@react-native-community/netinfo', () => ({
   fetch: jest.fn().mockResolvedValue({ isConnected: true }),
 }), { virtual: true });
 
+// Mock expo-task-manager for tests
+jest.mock('expo-task-manager', () => ({
+  defineTask: jest.fn(),
+  isTaskRegisteredAsync: jest.fn().mockResolvedValue(false),
+}));
+
+// Mock expo-background-fetch for tests
+jest.mock('expo-background-fetch', () => ({
+  registerTaskAsync: jest.fn().mockResolvedValue(undefined),
+  unregisterTaskAsync: jest.fn().mockResolvedValue(undefined),
+  getStatusAsync: jest.fn().mockResolvedValue(3), // BackgroundFetchStatus.Available
+  BackgroundFetchResult: {
+    NewData: 1,
+    NoData: 2,
+    Failed: 3,
+  },
+  BackgroundFetchStatus: {
+    Restricted: 1,
+    Denied: 2,
+    Available: 3,
+  },
+}));
+
 // Mock react-native-mmkv for tests
 jest.mock('react-native-mmkv', () => ({
   createMMKV: jest.fn().mockImplementation(() => ({

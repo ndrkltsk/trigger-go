@@ -95,3 +95,38 @@ describe('notification preferences', () => {
     expect(storage.set).toHaveBeenCalledWith('quietHoursEnd', '08:00');
   });
 });
+
+describe('background check preferences', () => {
+  it('has correct defaults', () => {
+    const state = usePreferencesStore.getState();
+    expect(state.backgroundCheckEnabled).toBe(true);
+    expect(state.backgroundCheckInterval).toBe('15');
+  });
+
+  it('setBackgroundCheckEnabled updates and persists', () => {
+    usePreferencesStore.getState().setBackgroundCheckEnabled(false);
+    expect(usePreferencesStore.getState().backgroundCheckEnabled).toBe(false);
+    expect(storage.set).toHaveBeenCalledWith('backgroundCheckEnabled', false);
+  });
+
+  it('setBackgroundCheckInterval updates and persists', () => {
+    usePreferencesStore.getState().setBackgroundCheckInterval('30');
+    expect(usePreferencesStore.getState().backgroundCheckInterval).toBe('30');
+    expect(storage.set).toHaveBeenCalledWith('backgroundCheckInterval', '30');
+  });
+
+  it('loadPreferences restores background check settings', () => {
+    (storage.getBoolean as jest.Mock).mockImplementation((key: string) => {
+      if (key === 'backgroundCheckEnabled') return false;
+      return undefined;
+    });
+    (storage.getString as jest.Mock).mockImplementation((key: string) => {
+      if (key === 'backgroundCheckInterval') return '60';
+      return undefined;
+    });
+
+    usePreferencesStore.getState().loadPreferences();
+    expect(usePreferencesStore.getState().backgroundCheckEnabled).toBe(false);
+    expect(usePreferencesStore.getState().backgroundCheckInterval).toBe('60');
+  });
+});

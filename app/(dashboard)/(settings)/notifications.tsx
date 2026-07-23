@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, TextInput, Pressable } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Switch } from '@/components/ui/switch';
 import { ContentContainer } from '@/components/layout';
 import { ChevronRight } from 'lucide-react-native';
-import { usePreferencesStore, type NotifyEnvironments } from '@/stores/preferences-store';
+import SegmentedControl from '@react-native-segmented-control/segmented-control';
+import { usePreferencesStore, type NotifyEnvironments, type BackgroundCheckInterval } from '@/stores/preferences-store';
 import { useEnvironmentsStore } from '@/stores/environments-store';
 import { useNotificationRulesStore } from '@/stores/notification-rules-store';
 import { ENV_FULL_LABELS } from '@/lib/environment';
+import {
+  getBackgroundFetchStatus,
+  getLastBackgroundRunTime,
+} from '@/services/notifications/background-task';
+import * as BackgroundFetch from 'expo-background-fetch';
+import { formatDistanceToNow } from 'date-fns';
 
 function SwitchRow({
   label,
@@ -57,7 +64,22 @@ export default function NotificationSettingsScreen() {
     setQuietHoursStart,
     quietHoursEnd,
     setQuietHoursEnd,
+    backgroundCheckEnabled,
+    setBackgroundCheckEnabled,
+    backgroundCheckInterval,
+    setBackgroundCheckInterval,
   } = usePreferencesStore();
+
+  const [bgFetchStatus, setBgFetchStatus] = useState<BackgroundFetch.BackgroundFetchStatus | null>(null);
+  const [lastRunTime, setLastRunTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    getBackgroundFetchStatus().then(setBgFetchStatus);
+    setLastRunTime(getLastBackgroundRunTime());
+  }, [backgroundCheckEnabled]);
+
+  const INTERVAL_OPTIONS: BackgroundCheckInterval[] = ['15', '30', '60'];
+  const INTERVAL_LABELS = ['15 min', '30 min', '1 hour'];
 
   const availableEnvironments = useEnvironmentsStore((s) => s.availableEnvironments);
 
@@ -134,7 +156,7 @@ export default function NotificationSettingsScreen() {
         </View>
 
         <SectionHeader title="Quiet Hours" />
-        <View className="bg-card border-border mx-4 tablet:mx-8 rounded-lg border overflow-hidden mb-8">
+        <View className="bg-card border-border mx-4 tablet:mx-8 rounded-lg border overflow-hidden">
           <SwitchRow
             label="Enable Quiet Hours"
             checked={quietHoursEnabled}
@@ -167,6 +189,71 @@ export default function NotificationSettingsScreen() {
             </>
           )}
         </View>
+
+        <SectionHeader title="Background Checks" />
+        <View className="bg-card border-border mx-4 tablet:mx-8 rounded-lg border overflow-hidden">
+          <SwitchRow
+            label="Enable Background Checks"
+            checked={backgroundCheckEnabled}
+            onCheckedChange={setBackgroundCheckEnabled}
+          />
+          {backgroundCheckEnabled && (
+            <>
+              <View className="border-border border-t" />
+              <View className="px-4 py-3">
+                <Text className="text-mobile-secondary text-foreground mb-2">Check Interval</Text>
+                <SegmentedControl
+                  values={INTERVAL_LABELS}
+                  selectedIndex={INTERVAL_OPTIONS.indexOf(backgroundCheckInterval)}
+                  onChange={(event) => {
+                    const index = event.nativeEvent.selectedSegmentIndex;
+                    setBackgroundCheckInterval(INTERVAL_OPTIONS[index]);
+                  }}
+                />
+              </View>
+              <View className="border-border border-t" />
+              <View className="px-4 py-3">
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-mobile-secondary text-foreground">Status</Text>
+                  {bgFetchStatus !== null && (
+                    <View className="flex-row items-center gap-1.5">
+                      <View
+                        className={`w-2 h-2 rounded-full ${
+                          bgFetchStatus === BackgroundFetch.BackgroundFetchStatus.Available
+                            ? 'bg-green-500'
+                            : bgFetchStatus === BackgroundFetch.BackgroundFetchStatus.Restricted
+                              ? 'bg-yellow-500'
+                              : 'bg-red-500'
+                        }`}
+                      />
+                      <Text className="text-mobile-caption text-muted-foreground">
+                        {bgFetchStatus === BackgroundFetch.BackgroundFetchStatus.Available
+                          ? 'Available'
+                          : bgFetchStatus === BackgroundFetch.BackgroundFetchStatus.Restricted
+                            ? 'Restricted'
+                            : 'Denied'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              {lastRunTime && (
+                <>
+                  <View className="border-border border-t" />
+                  <View className="flex-row items-center justify-between px-4 py-3">
+                    <Text className="text-mobile-secondary text-foreground">Last Check</Text>
+                    <Text className="text-mobile-caption text-muted-foreground">
+                      {formatDistanceToNow(new Date(lastRunTime), { addSuffix: true })}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </>
+          )}
+        </View>
+        <Text className="text-mobile-caption text-muted-foreground px-4 mt-2 mb-8">
+          Checks run approximately every {backgroundCheckInterval === '60' ? '1 hour' : `${backgroundCheckInterval} minutes`} when the app is closed. iOS may adjust timing based on usage patterns.
+        </Text>
         </ContentContainer>
       </ScrollView>
     </>
